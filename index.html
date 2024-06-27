@@ -14,7 +14,7 @@
         box-sizing: border-box;
       }
       :root {
-        --size-cell:0px;
+        /* --size-cell:0px; */
         --padding-cell:0px;
       }
       html,
@@ -160,28 +160,28 @@
         margin: 0 auto;
         /* flex-grow: 1; */
       }
+      .cell--wrap {
+        position: absolute;
+        width: 20%;
+       aspect-ratio: 1;
+       padding: var(--padding-cell);
+
+      }
       .cell {
+        left: - var(--padding-cell);
+        top: - var(--padding-cell);
         position: absolute;
         display: inline-flex;
         justify-content: center;
-        width: var(--size-cell);
+        background-color: #F4AC66;
+        border-radius: 10px;
+        border: solid 1px #E9E9E9;
+         width: calc(100% - var(--padding-cell) *2);
+         height: calc(100% - var(--padding-cell) *2);
+
         user-select: none;
-        height: var(--size-cell);
   
-        padding: var(--padding-cell);
         align-items: center;
-        /* background-color: silver; */
-      }.cell::before {
-        content: "";
-        background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAESSURBVHgB7ds9ysJAFIXhO5PgZ5mvEdKouAKzBFsb1+JO3IFb0MZScAW6AcEuYKOlf8k4JyKISzieFxIGpnq4015nsbIs+865ufd+GELIjKxoWsRvmuf5wQGbJMmWEfrVua7rIo2TnQGbHrfW2q/MPS7GVN3+t3tvZI9OkTWvOP4muGgd1nRY5C+nZpAoWof+feGuZ2PtY5CZtx9LYPYEZk9g9gRmT2D2BGZPYPYEZk9g9gRmT2D2BGZPYPYEZk9g9gRmT2D2BGZPYPYEZk9g9gRmT2D2BGZPYPaw5NEsO4S0baxhs+UdJrzD4TYYW/jjW13CIO/d0escwvJnFrXwkquqKjzW03CA3ggDNNo2MML6BNa+W3wWPd1sAAAAAElFTkSuQmCC");
-        background-size: cover;
-        background-clip: content-box;
-        position: absolute;
-        z-index: -1;
-        /* left: var(--padding-cell); */
-        /* top: var(--padding-cell); */
-        width: calc(100% - var(--padding-cell) * 2);
-        height: calc(100% - var(--padding-cell) * 2);
       }
       .wrapCardNormalGeneral {
         background-color: #d47d38;
@@ -205,6 +205,11 @@
         margin-bottom: 2px;
         text-shadow: 2px 2px rgba(0, 0, 0, 0.5);
         font-size: 16px;
+      }
+      @media only screen and (min-width: 700px) {
+        .mapGame {
+          width: 60%;
+        }
       }
       .wrapCardNormalGeneralPreview {
         /* transform: scale(1.2); */
@@ -385,6 +390,13 @@
     </div>
 
     <script>
+              window.addEventListener("resize", () => {
+                const mapEl = document.querySelector(".mapGame");
+        const widthMap = mapEl.clientWidth;
+
+       (mapEl.style["height"] =  widthMap  +"px");
+
+              });
       function formatTime(seconds) {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
@@ -400,7 +412,7 @@
         document.documentElement.style.setProperty('--size-cell', size/ 5 +"px");
         document.documentElement.style.setProperty('--padding-cell', 5+"px");
         }
-        // window.addEventListener("resize", () => )
+
      
       var main_game = document.getElementById("main_game");
       window.addEventListener("create-map", (e) => {
@@ -415,8 +427,9 @@
         for (let animal of window.listAnimals) {
           const cell = window.mapGame[animal.idCurrentCell];
           newInnerHtmlMap +=`
-          <div  class="cell" style="left:${cell.columnIndex * widthMap /5}px; top:${cell.rowIndex * widthMap /5}px">
-            <img src="${animal.image}" alt="animal" ></div>
+          <div class="cell--wrap"  style="left:${cell.columnIndex * 20}%; top:${cell.rowIndex * 20}%">
+          <div  class="cell">
+            <img src="${animal.image}" alt="animal" ></div></div>
           `;
           index++;
         }
