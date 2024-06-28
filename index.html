@@ -5,7 +5,9 @@
     <meta
       name="viewport"
       content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no"
+      
     />
+
     <meta name="ad.orientation" content="portrait,landscape" />
 
     <title>Animatch Fair</title>
@@ -31,8 +33,20 @@
         overflow: hidden;
         position: relative;
 
-        background: linear-gradient(180deg, #48b9ff 0%, #c1e7ff 100%);
+        background: linear-gradient(180deg, #48b9ff 100%, #FFFFFF 100%);
       }
+      .top-info-playing {
+        display: flex;
+         justify-content: space-around;
+         padding: 0 10vw;
+         margin-top: 5vh;
+         margin-bottom: 10vh;
+         transform: scale(1.4);
+         /* margin-trim: ; */
+      }
+      /* .draggable-mirror {
+        transform: scale(2);
+      } */
       #main_game {
         width: 100%;
         position: relative;
@@ -135,6 +149,18 @@
     </style>
 
     <style>
+      @media screen and (orientation: landscape) {
+       
+        .preview_correct_cell {
+          transform: scale(0.8);
+        }
+        /* .animal {
+        transform: scale(1.7);
+
+        } */
+
+      
+}
       .preview_screen_intro_center {
         display: flex;
         justify-content: center;
@@ -142,7 +168,6 @@
       }
       .draggable-source--is-dragging {
       opacity: 0;
-
       }
 
     
@@ -151,7 +176,7 @@
         font-size: 2.2em;
       }
       .none {
-        display: none;
+        display: none !important;
       }
       .draggable-dropzone--active ~ .cell--wrap{
         z-index: 9999 !important;
@@ -177,9 +202,12 @@
 
       }
       .animal {
+        aspect-ratio: 1;
+      }
+      /* .animal {
         width: 80px;
         height: 80px;
-      }
+      } */
       .cell {
         left: - var(--padding-cell);
         top: - var(--padding-cell);
@@ -196,9 +224,13 @@
   
         align-items: center;
       }
+      .correct {
+        background-color: #47EA39;
+
+      }
       .wrapCardNormalGeneral {
         background-color: #d47d38;
-        border: 2px #f4ac66 solid;
+        border: 3px #f4ac66 solid;
         border-radius: 30px;
         display: inline-flex;
         justify-content: center;
@@ -217,13 +249,9 @@
         /* line-height: 16px; */
         margin-bottom: 2px;
         text-shadow: 2px 2px rgba(0, 0, 0, 0.5);
-        font-size: 16px;
+        font-size: 18px;
       }
-      @media only screen and (min-width: 700px) {
-        .mapGame {
-          width: 60%;
-        }
-      }
+   
       .wrapCardNormalGeneralPreview {
         /* transform: scale(1.2); */
         position: relative;
@@ -242,18 +270,59 @@
       .wrapCardNormalGeneralPreview--outer {
         text-align: center;
 
-        transform: scale(1);
+        
       }
       .preview_correct_cell_textMemories {
         text-align: center;
-        font-size: 22px;
+        font-size: 24px;
         margin: 5vh 0;
       }
-      @media only screen and (min-width: 700px) {
+      @media only screen and (min-width: 700px ) {
+        .mapGame {
+          width: 60%;
+        }
         .wrapCardNormalGeneralPreview--outer {
-          transform: scale(2);
+          transform: scale(1.6);
+        }
+        .preview_correct_cell_textMemories  {
+          font-size: 30px;
+          /* margin: 10vh 0; */
+          margin-top: 10vh;
+        }
+        .animal {
+          /* zoom: 1.2; */
+          
+        }
+        .wrapCardNormalGeneralLetGoBtn {
+          transform: scale(1.1);
         }
       }
+      @media only screen and (min-width: 1024px ) {
+        .mapGame {
+          width: 55%;
+          
+        }
+        .animal {
+          /* zoom: 1.4; */
+          
+        }
+      }
+      @media only screen and (min-width: 1180px ) {
+        .mapGame {
+          width: 55%;
+          
+        }
+        .animal {
+          /* zoom: 1.4; */
+          
+        }
+      }
+      
+      .game-playing {
+        height: 100%;
+        display: flex;
+
+flex-direction: column;      }
     </style>
   </head>
   <body>
@@ -395,9 +464,25 @@
             Memorize the correct positions
           </p>
           <div class="mapGame"></div>
-          <div class="wrapCardNormalGeneral wrapCardNormalGeneralLetGoBtn text_play_info">
+          <div  class="wrapCardNormalGeneral wrapCardNormalGeneralLetGoBtn text_play_info">
             LET’S GO!
           </div>
+        </div>
+        <div class="game-playing none">
+          <div class="top-info-playing">
+
+            <div class="wrapCardNormalGeneral ">
+              <img id="time_icon" alt="time icon" style="margin-right: 10px" />
+              <span id="time_count_preview" class="text_play_info">00:00</span>
+            </div>
+            <div class="wrapCardNormalGeneral ">
+              <img id="move_hand_icon" alt="move hand icon" style="margin-right: 10px" />
+              <span class="text_play_info">0</span>
+            </div>
+            <!-- move_hand_icon -->
+          </div>
+          
+          <div class="mapGame"></div>
         </div>
       </div>
     </div>
@@ -441,55 +526,118 @@ const droppable = new Draggable.Draggable (container, {
 
 });
 
-
-let droppableOrigin;
+let isShowPreview = true;
+let dragg_moveTo;
 
   // --- Draggable events --- //
   droppable.on('drag:start', (evt) => {
-    console.log(evt);
+    dragg_moveTo  = evt.data.originalSource;
+    if(isShowPreview) {
+      evt.cancel()
+
+    }
   });
 
-  droppable.on('drag:over:container', (evt) => {
- 
-  });
-  droppable.on('drag:out:containerr', (evt) => {
- 
-   });
-   droppable.on('drag:pressure', (evt) => {
- 
-   });
-  
+
+  const handleSwapAnimalDragg = (moveToInfo, currentInfo, el_cellMoveTo, el_cellCurrent,el_animalMoveTo, el_animalCurrent) => {
+    
+
+      const idMoveToTmp = moveToInfo.animal.idCurrentCell;
+      const idCurrentTmp = currentInfo.animal.idCurrentCell;
+    
+      moveToInfo.animal.idCurrentCell= idCurrentTmp;
+      currentInfo.animal.idCurrentCell = idMoveToTmp;
+
+      let countCorrect =0;
+      if( moveToInfo.animal.idCorrectCell == currentInfo.cell.index ) {
+        countCorrect++;
+        el_cellCurrent.classList.add("correct");
+        currentInfo.cell.isCorrect = true;
+
+      }
+      if(currentInfo.animal.idCorrectCell == moveToInfo.cell.index) {
+        countCorrect++;
+        el_cellMoveTo.classList.add("correct");
+        moveToInfo.cell.isCorrect = true;
+
+
+      }
+// set element
+      // el_animalMoveTo.dataset.idAnimal = idCurrentTmp;
+      // el_animalCurrent.dataset.idAnimal = idMoveToTmp;
+
+      el_animalMoveTo.src = currentInfo.animal.image;
+      el_animalCurrent.src = moveToInfo.animal.image;
+   
+    
+  }
+  class CellAndAnimal {
+
+    constructor(cell, animal) {
+      this.cell = cell;
+      this.animal = animal
+    }
+  }
   droppable.on('drag:stop', (event) => {
-      const isCorrectDropArea =document.querySelector(".draggable--over") != null;
-      if(isCorrectDropArea) {
-        console.log("zooo")
+      const dragg_current =document.querySelector(".draggable--over");
+      const el_mirror =document.querySelector(".draggable-mirror");
+      if(dragg_current != null) {
+        const idAnimalCurrentCell = Number(dragg_current.dataset.idAnimal);
+        const idAnimalMoveToCell = Number(dragg_moveTo.dataset.idAnimal) ;
+        const indexCellCurrent = Number(dragg_current.parentNode.dataset.indexCell);
+        const indexCellMoveTo = Number(dragg_moveTo.parentNode.dataset.indexCell);
+        const cellMoveTo = window.mapGame[indexCellMoveTo] ;
+            const cellCurrent = window.mapGame[indexCellCurrent] ;
+            
+        if(idAnimalCurrentCell !=idAnimalMoveToCell &&!( cellMoveTo.isCorrect ||cellCurrent.isCorrect)) {
+            const animalMoveTo = window.listAnimals.find(e=> e.idCurrentCell ==idAnimalMoveToCell);
+            const animalCurrent = window.listAnimals.find(e=> e.idCurrentCell == idAnimalCurrentCell);
+            
+           
+            const infoMoveTo = new CellAndAnimal(cellMoveTo, animalMoveTo);
+            const infoCurrent = new CellAndAnimal(cellCurrent, animalCurrent);
+
+        
+            handleSwapAnimalDragg(infoMoveTo,infoCurrent,dragg_moveTo.parentNode,dragg_current.parentNode,dragg_moveTo,dragg_current);
+
+        } else {
+          console.log(document.querySelector(".draggable-mirror"))
+          // go back
+        }
+      } else {
+        console.log(document.querySelector(".draggable-mirror"))
+
       }
       });
 
   droppable.on('mirror:created', (event) => {
         event.data.mirror.style.zIndex = 1000;
+       
+        
       });
 
       window.addEventListener("create-map", (e) => {
+        const {listAnimals,listCells} = e.detail;
+
         const mapEl = document.querySelector(".mapGame");
-       
+        
         const widthMap = mapEl.clientWidth;
         resizeSize(widthMap)
         
         mapEl.innerHTML ="";
         let newInnerHtmlMap="";
         let index =0;
-        for (let animal of window.listAnimals) {
-          const cell = window.mapGame[animal.idCurrentCell];
+        for (let animal of listAnimals) {
+          const cell = listCells[animal.idCurrentCell];
           newInnerHtmlMap +=`
           <div class="cell--wrap"  style="left:${cell.columnIndex * 20}%; top:${cell.rowIndex * 20}%">
-          <div  class="cell">
-            <img class="animal" src="${animal.image}" alt="animal" ></div></div>
+          <div data-index-cell="${cell.index}"   class="cell ${cell.isCorrect ? "correct":""}">
+            <img data-id-animal="${animal.idCurrentCell}" class="animal" src="${animal.image}" alt="animal" ></div></div>
           `;
           index++;
         }
-       (mapEl.style["height"] =  widthMap  +"px");
-        
+       (mapEl.style["height"] =  widthMap    +"px");
+     
         mapEl.innerHTML = newInnerHtmlMap;
       });
       window.addEventListener("show-intro-preview", (e) => {
@@ -546,6 +694,7 @@ let droppableOrigin;
 
         // setTimeout(() => {
         previewIntro.remove();
+        
         const showPreview = new Event("show-preview");
         window.dispatchEvent(showPreview);
         // }, 2500);
@@ -558,18 +707,62 @@ let droppableOrigin;
         const el_time_countdown_preview =
           document.getElementById("time_count_preview");
 
-        const showIntroEvent = new Event("create-map");
+        const showIntroEvent = new CustomEvent("create-map",{ detail: {
+        listAnimals: window.listAnimals.map(e => {return {...e, idCurrentCell:e.idCorrectCell}}),
+        listCells: window.mapGame.map(e => {return {...e, isCorrect:true}})
+        } });
         window.dispatchEvent(showIntroEvent);
 
+        const goToGame = () => {
+          isShowPreview = false;
+         const elPreveiw = document.querySelector(".preview_correct_cell");
+        //  elPreveiw.classList.add("none");
+        main_game.classList.remove("overlay");
+         elPreveiw.remove();
+         document.querySelector(".game-playing").classList.toggle("none");
+          const showGame = new CustomEvent ("show-game");
+          window.dispatchEvent(showGame);
+
+        }
         var timer = setInterval(() => {
           if (countTimeDown != -1) {
             el_time_countdown_preview.innerText = formatTime(countTimeDown);
 
             countTimeDown--;
           } else {
+            goToGame();
             clearInterval(timer);
           }
         }, 1000);
+        
+        document.querySelector(".wrapCardNormalGeneralLetGoBtn").onclick = () => {
+          goToGame();
+
+          clearInterval(timer);
+        }
+      });
+    
+      window.addEventListener("show-game", () => {
+        document.getElementById("time_icon").src = window.Assets.filter(
+          (e) => e.key === "timmer"
+        )[0].data;
+        document.getElementById ("move_hand_icon").src = window.Assets.filter(
+          (e) => e.key === "move_hand_icon"
+        )[0].data;
+        const createMapEvent = new CustomEvent("create-map",{ detail: {
+        listAnimals: window.listAnimals,
+        listCells: window.mapGame
+        } });
+        window.dispatchEvent(createMapEvent);
+
+        const elTime =document.getElementById("time_count_preview");
+        let timeCount = 0;
+        setInterval(() => {
+          timeCount++;
+
+          elTime.innerText = formatTime(timeCount);
+
+        },1000);
       });
     </script>
 
