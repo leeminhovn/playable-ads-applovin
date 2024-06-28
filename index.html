@@ -140,12 +140,21 @@
         justify-content: center;
         align-items: center;
       }
+      .draggable-source--is-dragging {
+      opacity: 0;
+
+      }
+
+    
       .preview_screen_intro_center > p {
         color: white;
         font-size: 2.2em;
       }
       .none {
         display: none;
+      }
+      .draggable-dropzone--active ~ .cell--wrap{
+        z-index: 9999 !important;
       }
       .preview_correct_cell {
         display: flex;
@@ -167,6 +176,10 @@
        padding: var(--padding-cell);
 
       }
+      .animal {
+        width: 80px;
+        height: 80px;
+      }
       .cell {
         left: - var(--padding-cell);
         top: - var(--padding-cell);
@@ -175,7 +188,7 @@
         justify-content: center;
         background-color: #F4AC66;
         border-radius: 10px;
-        border: solid 1px #E9E9E9;
+        border: solid 2px #E9E9E9;
          width: calc(100% - var(--padding-cell) *2);
          height: calc(100% - var(--padding-cell) *2);
 
@@ -343,7 +356,7 @@
         },
       ];
     </script>
-
+<script src="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/draggable.bundle.js"></script>
     <div id="page_outer">
       <div id="cloud_background"></div>
 
@@ -415,6 +428,48 @@
 
      
       var main_game = document.getElementById("main_game");
+
+
+
+const container = document.querySelector('#main_game');
+const droppable = new Draggable.Draggable (container, {
+  draggable: '.animal',
+  // dropzone: '.cell',
+  mirror: {
+    constrainDimensions: true, //prevent element from shrinking while being dragged
+  },
+
+});
+
+
+let droppableOrigin;
+
+  // --- Draggable events --- //
+  droppable.on('drag:start', (evt) => {
+    console.log(evt);
+  });
+
+  droppable.on('drag:over:container', (evt) => {
+ 
+  });
+  droppable.on('drag:out:containerr', (evt) => {
+ 
+   });
+   droppable.on('drag:pressure', (evt) => {
+ 
+   });
+  
+  droppable.on('drag:stop', (event) => {
+      const isCorrectDropArea =document.querySelector(".draggable--over") != null;
+      if(isCorrectDropArea) {
+        console.log("zooo")
+      }
+      });
+
+  droppable.on('mirror:created', (event) => {
+        event.data.mirror.style.zIndex = 1000;
+      });
+
       window.addEventListener("create-map", (e) => {
         const mapEl = document.querySelector(".mapGame");
        
@@ -429,7 +484,7 @@
           newInnerHtmlMap +=`
           <div class="cell--wrap"  style="left:${cell.columnIndex * 20}%; top:${cell.rowIndex * 20}%">
           <div  class="cell">
-            <img src="${animal.image}" alt="animal" ></div></div>
+            <img class="animal" src="${animal.image}" alt="animal" ></div></div>
           `;
           index++;
         }
@@ -517,6 +572,8 @@
         }, 1000);
       });
     </script>
+
+
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         // load audio
