@@ -94,6 +94,10 @@
       }
       .preview_screen_intro {
         display: inline-flex;
+        position: fixed;
+        inset: 0;
+        top: 50%;
+        transform: translateY(-30%);
         flex-direction: column;
       }
       .preview_screen_intro .preview_screen_intro_arrow {
@@ -160,6 +164,7 @@
       }
       .wrap_game {
         height: 100%;
+        margin: 0 auto;
       }
       @media screen and (orientation: landscape) {
         .preview_correct_cell {
@@ -169,7 +174,23 @@
         transform: scale(1.7);
 
         } */
+        @media only screen and (min-width: 1184px) and (max-height: 870px) {
+          .wrap_game {
+        width: 80%;
       }
+       
+      }
+      
+      }
+      @media only screen and (min-width: 1184px) and (max-height: 675px) {
+          .wrap_game {
+        width: 60%;
+      }
+       
+      }
+      
+      
+    
       .preview_screen_intro_center {
         display: flex;
         justify-content: center;
@@ -854,7 +875,6 @@ break;
     }
     case 2: {
       const list_nother = window.Assets.find(e => e.key ==="list_other");
-      console.log(list_nother)
 
 data= [getRandomItem(list_nother.data), boxRandom];
 break;
@@ -1041,12 +1061,12 @@ break;
           new Cell(2, 3, 9),
         ];
 
-        // setTimeout(() => {
+        setTimeout(() => {
         previewIntro.remove();
 
         const showPreview = new Event("show-preview");
         window.dispatchEvent(showPreview);
-        // }, 2500);
+        }, 2500);
       });
       window.addEventListener("show-preview", (e) => {
         
@@ -1124,7 +1144,6 @@ break;
         }, 1000);
       });
       const timeCountEmojiANdAnimation  = setInterval (() => {
-        console.log(window.countMoves)
         if(!window.countMoves) {
           return;
         }
