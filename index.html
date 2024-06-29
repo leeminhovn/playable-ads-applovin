@@ -233,6 +233,7 @@
         width: 130%;
         aspect-ratio: 1;
         z-index: 1;
+        user-select: none;
       }
       /* .animal {
         width: 80px;
@@ -312,8 +313,8 @@
         /* transform: scale(1.1) translateY(-10%); */
         /* z-index: 10; */
       }
-      .generate_animation canvas  {
-        transform: translate(-50%,-70%) scale(2) ;
+      .generate_animation svg  {
+        transform: translateY(-8%)  scale(1.1) ;
       }
        .animalHavAnimation .animal {
       opacity: 0;
@@ -8191,7 +8192,7 @@ exports.Plugins = Plugins;
             ></div>
           </div>
         </div>
-        <div class="preview_correct_cell">
+        <div class="preview_correct_cell none">
           <div class="wrapCardNormalGeneralPreview--outer">
             <div class="wrapCardNormalGeneral wrapCardNormalGeneralPreview">
               <img id="time_icon" alt="time icon" style="margin-right: 10px" />
@@ -8552,7 +8553,6 @@ break;
       window.addEventListener("show-intro-preview", (e) => {
         main_game.classList.add("overlay");
         const previewIntro = document.querySelector(".preview_screen");
-        previewIntro.classList.remove("none");
 
         class Cell {
           rowIndex = 0;
@@ -8625,6 +8625,7 @@ break;
           new Cell(3, 3, 8),
           new Cell(2, 3, 9),
         ];
+        previewIntro.classList.remove("none");
 
         setTimeout(() => {
         previewIntro.remove();
@@ -8634,7 +8635,8 @@ break;
         }, 2500);
       });
       window.addEventListener("show-preview", (e) => {
-        
+        const elPreveiw = document.querySelector(".preview_correct_cell");
+        elPreveiw.classList.remove("none");
         document.getElementById("time_icon").src = window.Assets.filter(
           (e) => e.key === "timmer"
         )[0].data;
@@ -8750,10 +8752,12 @@ break;
                 el_cell.classList.add("animalHavAnimation")
                 bodymovin.loadAnimation({
   container: document.querySelector(`.generate_animation[data-id-animal="${animal.idCurrentCell}"]`), // container để chứa animation
-  renderer: 'canvas', // loại renderer
+  renderer: 'svg', // loại renderer
   loop: true, // lặp lại animation
   autoplay: true, // tự động phát
   rendererSettings: {
+    viewBoxOnly: true,
+
     preserveAspectRatio: 'xMidYMid meet'
   },
   animationData: animation // dữ liệu animation
