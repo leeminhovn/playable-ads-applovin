@@ -462,6 +462,19 @@
 transform: translate(-50%,-50%) scale(0.9) ;}
       }
 
+      @media only screen and (min-width: 600px) and (max-height: 700px) {
+       .wrap_game {
+        width:50%
+       }
+      }
+      @media only screen and (max-width: 1184px) and (min-width: 400px) and (max-height: 675px) {
+          .wrap_game {
+        width: 70%;
+      }
+       
+      }
+     
+
     </style>
   </head>
   <body>
@@ -8740,6 +8753,9 @@ break;
   renderer: 'canvas', // loại renderer
   loop: true, // lặp lại animation
   autoplay: true, // tự động phát
+  rendererSettings: {
+    preserveAspectRatio: 'xMidYMid meet'
+  },
   animationData: animation // dữ liệu animation
 });
 //                 elAnimation.innerHTML =(`
