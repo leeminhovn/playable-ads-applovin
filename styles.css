@@ -230,6 +230,10 @@ body {
   padding: var(--padding-cell);
 }
 .animal {
+  cursor: move; /* fallback if grab cursor is unsupported */
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
   width: 130%;
   aspect-ratio: 1;
   z-index: 1;

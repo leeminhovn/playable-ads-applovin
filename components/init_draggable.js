@@ -1,4 +1,4 @@
-import { formatTime, resizeSize } from "./helper.js";
+import { formatTime, getRandomEmoji, randomWithProbability, resizeSize } from "./helper.js";
 
    
 const initDraggable = () => {
