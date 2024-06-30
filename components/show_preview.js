@@ -3,9 +3,7 @@ import { formatTime } from "./helper.js";
 const showPreview = (e) => {
   const elPreveiw = document.querySelector(".preview_correct_cell");
   elPreveiw.classList.remove("none");
-  document.getElementById("time_icon").src = window.Assets.filter(
-    (e) => e.key === "timmer"
-  )[0].data;
+
   let countTimeDown = 30;
   const el_time_countdown_preview =
     document.getElementById("time_count_preview");

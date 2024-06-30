@@ -244,9 +244,7 @@ window.addEventListener("create-map", (e) => {
 
 window.addEventListener("show-game", () => {
   window.countMoves = 0;
-  document.getElementById("time_icon").src = window.Assets.filter(
-    (e) => e.key === "timmer"
-  )[0].data;
+
   
   const createMapEvent = new CustomEvent("create-map", {
     detail: {
