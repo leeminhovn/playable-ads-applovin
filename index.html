@@ -2,11 +2,12 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    
     <meta
       name="viewport"
       content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no"
     />
-
+    
     <meta name="ad.orientation" content="portrait,landscape" />
 
     <title>Animatch Fair</title>
@@ -450,7 +451,8 @@
  .generate_emoji .emojiUpperSize{
   transform: translate(-50%,-50%)  ;
 
-} 
+}
+
 @media only screen and (min-width: 1024px) {
   .generate_emoji .emoji{
 
@@ -490,7 +492,31 @@ transform: translate(-50%,-50%) scale(0.9) ;}
       }
        
       }
-     
+      @media only screen and (max-height: 440px) and (max-width: 1000px) {
+  .wrap_game {
+        width: 53%;
+    }
+    .wrapCardNormalGeneralLetGoBtn {
+        transform: translateY(-6vh) scale(0.8);
+        
+    }
+    .wrapCardNormalGeneralPreview--outer {
+    transform: scale(1);
+    }
+    .preview_correct_cell_textMemories {
+      font-size: 25px;
+      margin-top:4vh;
+      margin-bottom: 5px;
+    }
+    .top-info-playing {
+      transform:scale(1);
+      padding:0;
+      margin :3vh 0px;
+    }
+    .card-level--wrap {
+      transform:scale(0.5);
+    }
+} 
 
     </style>
   </head>
