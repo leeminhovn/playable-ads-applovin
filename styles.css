@@ -479,6 +479,33 @@ transform: translate(-50%,-50%) scale(0.9) ;}
 }
  
 }
+@media only screen and (max-height: 480px) and (max-width: 400px) {
+  .preview_screen_intro_center > p {
+    font-size: 2em;
+  }
+  .preview_correct_cell {
+    padding-top: 10vh;
+  }
+  .wrapCardNormalGeneralPreview--outer {
+    transform: scale(1);
+  }
+  .wrapCardNormalGeneralLetGoBtn {
+    transform: translateY(-80%) scale(0.8);
+  }
+  .top-info-playing {
+    transform: scale(1.2);
+  }
+  #cloud_background  {
+    transform: translate(-50%, 4vh) scale(2);
+  }
+  .card-level--wrap {
+    transform: scale(0.6);
+  }
+  .preview_correct_cell_textMemories {
+    font-size: 21px;
+    margin-bottom: 2vh;
+  }
+}
 @media only screen and (max-height: 440px) and (max-width: 1000px) {
 .wrap_game {
   width: 53%;
