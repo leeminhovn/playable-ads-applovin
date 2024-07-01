@@ -1,4 +1,4 @@
-import { formatTime, getRandomEmoji, randomWithProbability, resizeSize } from "./helper.js";
+import { formatTime, getRandomEmoji, getRandomItem, randomWithProbability, resizeSize } from "./helper.js";
 
    
 const initDraggable = () => {
@@ -100,6 +100,8 @@ const handleSwapAnimalDragg = (
   if(window.countMoves === 1) {
     document.getElementById("gif_hand_move").remove()
     main_game.classList.remove("overlay");
+  } else if (window.countMoves === 6) {
+    window.ExitApi.exit();
   }
   el_animalMoveTo.src = currentInfo.animal.image;
   el_animalCurrent.src = moveToInfo.animal.image;
@@ -300,9 +302,14 @@ const timeCountEmojiANdAnimation  = setInterval (() => {
           // document.querySelector("")
           
           const el_cell=  document.querySelector(`.cell[data-index-cell="${animal.idCurrentCell}"]`);
-          
-          el_cell.classList.add("animalHavAnimation")
-          bodymovin.loadAnimation({
+          el_cell.classList.add("animalHavAnimation");
+          // const event = new CustomEvent("show-animation",{
+          //   detail: {
+          //     id: animal.idCurrentCell,
+          //     animation: window.mapGame,
+          //   },
+          // });
+         bodymovin .loadAnimation({
 container: document.querySelector(`.generate_animation[data-id-animal="${animal.idCurrentCell}"]`), // container để chứa animation
 renderer: 'svg', // loại renderer
 loop: true, // lặp lại animation
