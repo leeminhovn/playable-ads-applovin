@@ -100,9 +100,13 @@ const handleSwapAnimalDragg = (
   if(window.countMoves === 1) {
     document.getElementById("gif_hand_move").remove()
     main_game.classList.remove("overlay");
-  } else if (window.countMoves === 6) {
-    window.ExitApi.exit();
-  }
+  } else if (window.countMoves === 5) {
+    ExitApi.exit();
+  } 
+  // else if(!window.mapGame.some(e =>!e.isCorrect)) {
+  //   ExitApi.exit();
+
+  // }
   el_animalMoveTo.src = currentInfo.animal.image;
   el_animalCurrent.src = moveToInfo.animal.image;
   goBackAnimation(event, currentInfo.animal.image);
