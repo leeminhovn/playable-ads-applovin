@@ -100,7 +100,7 @@ const handleSwapAnimalDragg = (
   if(window.countMoves === 1) {
     document.getElementById("gif_hand_move").remove()
     main_game.classList.remove("overlay");
-  } else if (window.countMoves === 5) {
+  } else if (window.countMoves === 6) {
     ExitApi.exit();
   } 
   // else if(!window.mapGame.some(e =>!e.isCorrect)) {
