@@ -263,7 +263,37 @@
                 this.type = type;
                 this.graphic = null;
             }
+            renderHighlightGreen() {
+                const { CELL_SIZE, CELL_PADDING, CELL_BORDER_WIDTH, CELL_BORDER_RADIUS } = CONFIG;
 
+                const newGraphic = new PIXI.Graphics();
+                const innerSize = CELL_SIZE - CELL_PADDING * 2;
+                const innerX = CELL_PADDING;
+                const innerY = CELL_PADDING;
+
+                // Padding: gradient xanh
+                const gradientTexture = this.createGradientTexture(CELL_SIZE, CELL_SIZE, '#2E7D32', '#00C853');
+                newGraphic.beginTextureFill({ texture: gradientTexture });
+                newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
+                newGraphic.endFill();
+
+                // Background: xanh
+                newGraphic.beginFill(0x00FF00);
+                newGraphic.drawRoundedRect(innerX, innerY, innerSize, innerSize, CELL_BORDER_RADIUS);
+                newGraphic.endFill();
+
+                // Border giữ mặc định
+                newGraphic.lineStyle(CELL_BORDER_WIDTH, parseInt(CONFIG.CELL_BORDER_COLOR.slice(1), 16));
+                newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
+
+                // Giữ icon theo loại
+                const icon = this.createIcon(this.type);
+                icon.position.set(CELL_SIZE / 2, CELL_SIZE / 2);
+                newGraphic.addChild(icon);
+
+                this.graphic = newGraphic;
+                return newGraphic;
+            }
             render() {
                 const { CELL_SIZE, CELL_PADDING, CELL_BORDER_WIDTH, CELL_BORDER_RADIUS } = CONFIG;
 
@@ -328,7 +358,8 @@
                     return text;
                 }
             }
-         createGradientTexture(width, height, fromColor, toColor, direction = 'vertical') {
+            
+            createGradientTexture(width, height, fromColor, toColor, direction = 'vertical') {
                 // 1. Tạo canvas tạm
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
@@ -456,8 +487,19 @@
                 this.app.stage.addChild(this.boardContainer);
 
                 this.blocksContainer = new PIXI.Container();
-                const totalBlocksWidth = 3 * 120 - 20; // 3 blocks với spacing 120, điều chỉnh để không overlap
-                this.blocksContainer.position.set((this.app.renderer.width - totalBlocksWidth) / 2, CELL_SIZE * BOARD_ROWS + 20);
+                // Tính đúng tổng chiều rộng hàng preview theo board (3 ô 100 + 2 khoảng 20 = 340)
+                const previewCount = 3;
+                const slotWidth = 100;
+                const slotGap = 20;
+                const totalBlocksWidth = previewCount * slotWidth + (previewCount - 1) * slotGap;
+
+                // Canh giữa theo board thay vì theo toàn bộ canvas
+                const boardWidth = CONFIG.BOARD_COLS * CONFIG.CELL_SIZE;
+                const boardX = this.boardContainer.x;
+                this.blocksContainer.position.set(
+                    boardX + (boardWidth - totalBlocksWidth) / 2,
+                    CONFIG.CELL_SIZE * CONFIG.BOARD_ROWS + 20
+                );
                 this.app.stage.addChild(this.blocksContainer);
 
                 this.app.stage.interactive = true;
@@ -493,7 +535,7 @@
                     CELL_SIZE * BOARD_ROWS + CELL_BORDER_WIDTH*2, 
                     15
                 );
-
+                
                 this.app.stage.addChildAt(bg, 0);
             }
 
@@ -519,7 +561,9 @@
                 this.level = 1;
                 this.currentBlocks = [];
                 this.draggedBlock = null;
-
+                // Track các ô board đã highlight để restore mỗi frame
+                this.prevHighlightedBoardCells = new Set();
+                
                 this.generateNewBlocks();
                 this.renderBlockPreviews();
                 this.updateUI();
@@ -542,18 +586,71 @@
             }
 
             renderBlockPreviews() {
-                this.blocksContainer.removeChildren();
-
+                // Tạo wrapper một lần, sau đó chỉ cập nhật nội dung block bên trong
+                if (this.blocksContainer.children.length === 0) {
+                    this.currentBlocks.forEach((block, blockIndex) => {
+                        const blockGroup = this.createBlockPreview(block, blockIndex);
+                        blockGroup.interactive = !!block;
+                        blockGroup.buttonMode = !!block;
+                        blockGroup.removeAllListeners();
+                        if (block) {
+                            blockGroup.on('pointerdown', (e) => this.startDragBlock(e, block, blockIndex));
+                        }
+                        this.blocksContainer.addChild(blockGroup);
+                    });
+                    return;
+                }
+                        // Cập nhật nội dung của các wrapper đã tồn tại
                 this.currentBlocks.forEach((block, blockIndex) => {
-                    const blockGroup = this.createBlockPreview(block, blockIndex);
-                    blockGroup.interactive = true;
-                    blockGroup.buttonMode = true;
+                    const blockGroup = this.blocksContainer.children[blockIndex];
+                    if (!blockGroup) return;
+
+                    // Xóa cellGroup cũ nếu có (giữ nguyên wrapper và bg)
+                    if (blockGroup.cellGroup) {
+                        blockGroup.removeChild(blockGroup.cellGroup);
+                        blockGroup.cellGroup.destroy({ children: true });
+                        blockGroup.cellGroup = null;
+                    }
+
+                    blockGroup.interactive = !!block;
+                    blockGroup.buttonMode = !!block;
+                    blockGroup.removeAllListeners();
+
+                    if (!block) {
+                        // Slot trống: giữ wrapper/bg, disable tương tác
+                        blockGroup.alpha = 1;
+                        return;
+                    }
+
+                    // Tạo cellGroup mới và render block vào wrapper
+                    const cellGroup = new PIXI.Container();
+                    cellGroup.scale.set(0.5, 0.5);
+
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    block.cells.forEach(({ x, y }) => {
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    });
+                    const blockWidth = (maxX - minX + 1) * CONFIG.CELL_SIZE * 0.5;
+                    const blockHeight = (maxY - minY + 1) * CONFIG.CELL_SIZE * 0.5;
+                    const offsetX = (100 - blockWidth) / 2;
+                    const offsetY = (100 - blockHeight) / 2;
+
+                    cellGroup.position.set(offsetX, offsetY);
+                    block.render(cellGroup, -minX * CONFIG.CELL_SIZE, -minY * CONFIG.CELL_SIZE);
+
+                    blockGroup.cellGroup = cellGroup;
+                    blockGroup.addChild(cellGroup);
+
                     blockGroup.on('pointerdown', (e) => this.startDragBlock(e, block, blockIndex));
-                    this.blocksContainer.addChild(blockGroup);
                 });
+    
             }
 
             createBlockPreview(block, index) {
+              // Wrapper cố định + nền
                 const blockGroup = new PIXI.Container();
                 blockGroup.position.set(index * 120, 0);
 
@@ -564,25 +661,29 @@
                 bg.endFill();
                 blockGroup.addChild(bg);
 
-                const cellGroup = new PIXI.Container();
-                cellGroup.scale.set(0.5, 0.5);
+                // Nếu có block ban đầu, render nội dung vào cellGroup (để lần đầu hiển thị)
+                if (block) {
+                    const cellGroup = new PIXI.Container();
+                    cellGroup.scale.set(0.5, 0.5);
 
-                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                block.cells.forEach(({ x, y }) => {
-                    minX = Math.min(minX, x);
-                    minY = Math.min(minY, y);
-                    maxX = Math.max(maxX, x);
-                    maxY = Math.max(maxY, y);
-                });
-                const blockWidth = (maxX - minX + 1) * CONFIG.CELL_SIZE * 0.5;
-                const blockHeight = (maxY - minY + 1) * CONFIG.CELL_SIZE * 0.5;
-                const offsetX = (100 - blockWidth) / 2;
-                const offsetY = (100 - blockHeight) / 2;
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    block.cells.forEach(({ x, y }) => {
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    });
+                    const blockWidth = (maxX - minX + 1) * CONFIG.CELL_SIZE * 0.5;
+                    const blockHeight = (maxY - minY + 1) * CONFIG.CELL_SIZE * 0.5;
+                    const offsetX = (100 - blockWidth) / 2;
+                    const offsetY = (100 - blockHeight) / 2;
 
-                cellGroup.position.set(offsetX, offsetY);
-                block.render(cellGroup, -minX * CONFIG.CELL_SIZE, -minY * CONFIG.CELL_SIZE);
-                blockGroup.addChild(cellGroup);
+                    cellGroup.position.set(offsetX, offsetY);
+                    block.render(cellGroup, -minX * CONFIG.CELL_SIZE, -minY * CONFIG.CELL_SIZE);
 
+                    blockGroup.cellGroup = cellGroup;
+                    blockGroup.addChild(cellGroup);
+                }
 
                 return blockGroup;
             }
@@ -610,22 +711,36 @@
 
                 if (!this.draggedBlock.dragGraphic) {
                     this.draggedBlock.dragGraphic = new PIXI.Container();
-                    this.draggedBlock.dragGraphic.scale.set(1, 1); // Explicit scale về full size khi drag
+                    this.draggedBlock.dragGraphic.scale.set(1, 1);
                     this.app.stage.addChild(this.draggedBlock.dragGraphic);
+
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    this.draggedBlock.block.cells.forEach(({ x, y }) => {
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    });
+
+                    const width = (maxX - minX + 1) * CELL_SIZE;
+                    const height = (maxY - minY + 1) * CELL_SIZE;
+                    this.draggedBlock.dragBounds = { minX, minY, width, height };
+                    this.draggedBlock.dragCells = [];
 
                     this.draggedBlock.block.cells.forEach(({ x, y, type }) => {
                         const cell = new GameCell(type);
                         const graphic = cell.render();
-                        graphic.position.set(x * CELL_SIZE, y * CELL_SIZE);
+                        graphic.position.set((x - minX) * CELL_SIZE, (y - minY) * CELL_SIZE);
                         this.draggedBlock.dragGraphic.addChild(graphic);
+                        this.draggedBlock.dragCells.push({ dx: x, dy: y, cell, graphic });
                     });
 
-                    // Tạo layer highlight cho block kéo
-                    this.draggedBlock.dragHighlightLayer = new PIXI.Container();
-                    this.draggedBlock.dragGraphic.addChild(this.draggedBlock.dragHighlightLayer);
+                    // Anchor bottom-center bằng pivot
+                    this.draggedBlock.dragGraphic.pivot.set(width / 2, height);
                 }
 
-                this.draggedBlock.dragGraphic.position.set(pos.x - 25, pos.y - 60);
+                // Đặt vị trí: bottom-center tại vị trí ngón tay, lệch lên 10px
+                this.draggedBlock.dragGraphic.position.set(pos.x, pos.y - 10);
                 this.updateBoardHighlight(pos);
             }
 
@@ -633,34 +748,57 @@
                 const { CELL_SIZE, BOARD_COLS, BOARD_ROWS } = CONFIG;
                 const boardWorldPos = this.boardContainer.toGlobal({ x: 0, y: 0 });
 
-                const localPos = this.boardContainer.toLocal(pos);
-                const startC = Math.floor(localPos.x / CELL_SIZE);
+                const topLeftWorld = this.draggedBlock.dragGraphic.toGlobal(new PIXI.Point(0, 0));
+                const localPos = this.boardContainer.toLocal(topLeftWorld);
+                localPos.x+=CELL_SIZE/2;
+                localPos.y+=CELL_SIZE/2;
+
+                const startC = Math.floor(localPos.x  / CELL_SIZE);
                 const startR = Math.floor(localPos.y / CELL_SIZE);
 
-                // === XÓA HIGHLIGHT CŨ ===
-                if (this.highlightLayer) {
-                    this.app.stage.removeChild(this.highlightLayer);
-                }
-                this.highlightLayer = new PIXI.Container();
-                this.app.stage.addChild(this.highlightLayer);
-
-                if (this.draggedBlock?.dragHighlightLayer) {
-                    this.draggedBlock.dragHighlightLayer.removeChildren();
+                // Tạo/clear layer highlight nằm trên board
+                if (!this.boardHighlightLayer) {
+                    this.boardHighlightLayer = new PIXI.Container();
+                    this.boardContainer.addChild(this.boardHighlightLayer);
+                } else {
+                    this.boardHighlightLayer.removeChildren();
                 }
 
-                // === KIỂM TRA CÓ THỂ ĐẶT KHÔNG ===
+                // Revert cell style về mặc định cho các ô đã highlight ở frame trước
+                if (this.prevHighlightedBoardCells && this.prevHighlightedBoardCells.size) {
+                    this.prevHighlightedBoardCells.forEach(key => {
+                        const [r, c] = key.split(',').map(Number);
+                        const cell = this.board[r][c];
+                        if (cell.type === -1) return; // ô trống không cần render
+                        const newGraphic = cell.render();
+                        // Đảm bảo graphic mới giữ đúng vị trí trên lưới
+                        newGraphic.position.set(c * CONFIG.CELL_SIZE, r * CONFIG.CELL_SIZE);
+                        const spriteData = this.cellSprites.find(s => s.row === r && s.col === c);
+                        if (spriteData && spriteData.graphic.parent) {
+                            const index = spriteData.graphic.parent.children.indexOf(spriteData.graphic);
+                            this.boardContainer.removeChild(spriteData.graphic);
+                            this.boardContainer.addChildAt(newGraphic, index);
+                            spriteData.graphic = newGraphic;
+                            cell.graphic = newGraphic;
+                        }
+                    });
+                    this.prevHighlightedBoardCells.clear();
+                }
+
+                // Kiểm tra có thể đặt không
                 let canPlace = true;
-                const placingCells = []; // { r, c, type, dx, dy }
-                this.draggedBlock.block.cells.forEach(({ x: dx, y: dy, type }) => {
-                    const r = startR + dy;
-                    const c = startC + dx;
+                const placingCells = [];
+                this.draggedBlock.dragCells.forEach(dc => {
+                    const r = startR + Math.floor(dc.graphic.position.y / CELL_SIZE);
+                    const c = startC + Math.floor(dc.graphic.position.x / CELL_SIZE);
+                    const type = dc.cell.type;
                     if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS || this.board[r][c].type !== -1) {
                         canPlace = false;
                     }
-                    placingCells.push({ r, c, type, dx, dy });
+                    placingCells.push({ r, c, type, dx: dc.dx, dy: dc.dy });
                 });
 
-                // === HIGHLIGHT Ô TRỐNG HỢP LỆ (chỉ để xem có đặt được không) ===
+                // Overlay: highlight chỗ trống hợp lệ/không hợp lệ để báo trạng thái đặt
                 placingCells.forEach(({ r, c }) => {
                     if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS) return;
 
@@ -670,13 +808,12 @@
                     highlight.drawRect(0, 0, CELL_SIZE, CELL_SIZE);
                     highlight.endFill();
 
-                    const worldX = boardWorldPos.x + c * CELL_SIZE;
-                    const worldY = boardWorldPos.y + r * CELL_SIZE;
-                    highlight.position.set(worldX, worldY);
-                    this.highlightLayer.addChild(highlight);
+                    // Đặt highlight theo toạ độ local của boardContainer
+                    highlight.position.set(c * CELL_SIZE, r * CELL_SIZE);
+                    this.boardHighlightLayer.addChild(highlight);
                 });
 
-                // === NẾU CÓ THỂ ĐẶT → TÍNH NHÓM SẼ BỊ XÓA ===
+                // Nếu đặt được → tính nhóm sẽ bị xóa
                 if (canPlace) {
                     const tempBoard = this.board.map(row => row.map(cell => ({ type: cell.type })));
                     placingCells.forEach(({ r, c, type }) => {
@@ -685,7 +822,6 @@
 
                     const toBeRemoved = new Set();
 
-                    // Tìm tất cả nhóm ≥3
                     placingCells.forEach(({ r, c }) => {
                         if (tempBoard[r][c].type === -1) return;
                         const group = this.getConnectedGroupTemp(tempBoard, r, c);
@@ -694,45 +830,61 @@
                         }
                     });
 
-                    // === CHỈ HIGHLIGHT Ô ĐÃ CÓ ITEM (trên board) ===
+                    // CHỈ HIGHLIGHT Ô ĐÃ CÓ ITEM (trên board) → đổi background + padding sang màu xanh
                     toBeRemoved.forEach(key => {
                         const [r, c] = key.split(',').map(Number);
                         const originalCell = this.board[r][c];
 
-                        // BỎ QUA NẾU LÀ Ô TRỐNG (chưa có item)
                         if (originalCell.type === -1) return;
 
-                        const highlight = new PIXI.Graphics();
-                        highlight.beginFill(0x00FF00, 0.2);
-                        highlight.drawRect(0, 0, CELL_SIZE, CELL_SIZE);
-                        highlight.endFill();
+                        const newGraphic = originalCell.renderHighlightGreen();
+                        // Đảm bảo graphic mới giữ đúng vị trí trên lưới
+                        newGraphic.position.set(c * CONFIG.CELL_SIZE, r * CONFIG.CELL_SIZE);
+                        const spriteData = this.cellSprites.find(s => s.row === r && s.col === c);
+                        if (spriteData && spriteData.graphic.parent) {
+                            const index = spriteData.graphic.parent.children.indexOf(spriteData.graphic);
+                            this.boardContainer.removeChild(spriteData.graphic);
+                            this.boardContainer.addChildAt(newGraphic, index);
+                            spriteData.graphic = newGraphic;
+                            originalCell.graphic = newGraphic;
+                        }
 
-                        highlight.lineStyle(CONFIG.CELL_BORDER_WIDTH + 3, 0x00FF00, 1);
-                        highlight.drawRoundedRect(-1, -1, CELL_SIZE + 2, CELL_SIZE + 2, CONFIG.CELL_BORDER_RADIUS + 3);
-
-                        const worldX = boardWorldPos.x + c * CELL_SIZE;
-                        const worldY = boardWorldPos.y + r * CELL_SIZE;
-                        highlight.position.set(worldX, worldY);
-                        this.highlightLayer.addChild(highlight);
+                        // Lưu lại để lần sau revert
+                        this.prevHighlightedBoardCells.add(key);
                     });
 
-                    // === HIGHLIGHT Ô TRÊN BLOCK KÉO (luôn có item) ===
-                    if (this.draggedBlock.dragHighlightLayer) {
-                        placingCells.forEach(({ dx, dy, r, c }) => {
+                    // ĐỔI MÀU Ô TRONG BLOCK KÉO (re-render graphic của từng cell)
+                    if (this.draggedBlock.dragCells && this.draggedBlock.dragCells.length) {
+                        this.draggedBlock.dragCells.forEach(dc => {
+                            const r = startR + Math.floor(dc.graphic.position.y / CELL_SIZE);
+                            const c = startC + Math.floor(dc.graphic.position.x / CELL_SIZE);
                             const key = `${r},${c}`;
-                            if (!toBeRemoved.has(key)) return;
+                            const shouldHighlight = toBeRemoved.has(key);
 
-                            // Block kéo luôn có item → highlight nhỏ hơn, nằm dưới
-                            const highlight = new PIXI.Graphics();
-                            highlight.beginFill(0x00FF00, 0.2);
-                            highlight.drawRect(0, 0, CELL_SIZE, CELL_SIZE);
-                            highlight.endFill();
+                            const newGraphic = shouldHighlight ? dc.cell.renderHighlightGreen() : dc.cell.render();
+                            newGraphic.position.copyFrom(dc.graphic.position);
 
-                            highlight.lineStyle(CONFIG.CELL_BORDER_WIDTH, 0x00FF00, 1); // Giảm độ dày line và kích thước rect
-                            highlight.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CONFIG.CELL_BORDER_RADIUS);
+                            const parent = dc.graphic.parent;
+                            const index = parent.children.indexOf(dc.graphic);
+                            parent.removeChild(dc.graphic);
+                            parent.addChildAt(newGraphic, index);
+                            dc.graphic = newGraphic;
+                        });
+                    }
 
-                            highlight.position.set(dx * CELL_SIZE, dy * CELL_SIZE);
-                            this.draggedBlock.dragHighlightLayer.addChild(highlight);
+                    // Không vẽ overlay trên block kéo để tránh đè lên block
+                }
+                else {
+                    // Không đặt được → revert ô trong block về màu thường
+                    if (this.draggedBlock?.dragCells && this.draggedBlock.dragCells.length) {
+                        this.draggedBlock.dragCells.forEach(dc => {
+                            const newGraphic = dc.cell.render();
+                            newGraphic.position.copyFrom(dc.graphic.position);
+                            const parent = dc.graphic.parent;
+                            const index = parent.children.indexOf(dc.graphic);
+                            parent.removeChild(dc.graphic);
+                            parent.addChildAt(newGraphic, index);
+                            dc.graphic = newGraphic;
                         });
                     }
                 }
@@ -759,7 +911,7 @@
             }
 
             onPointerUp(e) {
-                if (!this.draggedBlock) return;
+                 if (!this.draggedBlock) return;
                 if (this.draggedBlock.dragGraphic) {
                     this.app.stage.removeChild(this.draggedBlock.dragGraphic);
                     this.draggedBlock.dragGraphic = null;
@@ -770,7 +922,9 @@
                 const { BOARD_COLS, BOARD_ROWS, CELL_SIZE } = CONFIG;
                 const pos = e.data.global;
 
-                const localPos = this.boardContainer.toLocal(pos);
+                const { width = 0, height = 0 } = this.draggedBlock.dragBounds || {};
+                const adjustedPos = new PIXI.Point(pos.x - width / 2, (pos.y - 10) - height);
+                const localPos = this.boardContainer.toLocal(adjustedPos);
 
                 const blockGroup = this.blocksContainer.children[this.draggedBlock.blockIndex];
                 if (blockGroup) blockGroup.alpha = 1;
@@ -779,11 +933,34 @@
                     this.app.stage.removeChild(this.draggedBlock.dragGraphic);
                 }
 
-                if (this.highlightLayer) {
-                    this.app.stage.removeChild(this.highlightLayer);
-                    this.highlightLayer = null;
+                if (this.boardHighlightLayer) {
+                    this.boardHighlightLayer.removeChildren();
                 }
 
+                /// Revert toàn bộ ô board đã highlight về mặc định sau khi thả chuột
+        if (this.prevHighlightedBoardCells && this.prevHighlightedBoardCells.size) {
+            this.prevHighlightedBoardCells.forEach(key => {
+                const [r, c] = key.split(',').map(Number);
+                    const cell = this.board[r][c];
+                    if (cell.type === -1) return;
+
+                    const newGraphic = cell.render();
+                    // FIX: set vị trí đúng theo lưới
+                    newGraphic.position.set(c * CONFIG.CELL_SIZE, r * CONFIG.CELL_SIZE);
+
+                    const spriteData = this.cellSprites.find(s => s.row === r && s.col === c);
+                    if (spriteData && spriteData.graphic.parent) {
+                        const index = spriteData.graphic.parent.children.indexOf(spriteData.graphic);
+                        this.boardContainer.removeChild(spriteData.graphic);
+                        this.boardContainer.addChildAt(newGraphic, index);
+                        spriteData.graphic = newGraphic;
+                        cell.graphic = newGraphic;
+                    }
+                });
+                this.prevHighlightedBoardCells.clear();
+            }
+                localPos.x+=CELL_SIZE/2;
+                 localPos.y += CELL_SIZE/2;
                 if (localPos.x >= 0 && localPos.x < CELL_SIZE * BOARD_COLS &&
                     localPos.y >= 0 && localPos.y < CELL_SIZE * BOARD_ROWS) {
                     this.tryPlaceBlock(this.draggedBlock.block, localPos.x, localPos.y, this.draggedBlock.blockIndex);
@@ -793,38 +970,41 @@
             }
 
             tryPlaceBlock(block, x, y, blockIndex) {
-                const { CELL_SIZE, BOARD_COLS, BOARD_ROWS } = CONFIG;
-                const startC = Math.floor(x / CELL_SIZE);
-                const startR = Math.floor(y / CELL_SIZE);
+                      const { CELL_SIZE, BOARD_COLS, BOARD_ROWS } = CONFIG;
+                    const startC = Math.floor(x / CELL_SIZE);
+                    const startR = Math.floor(y / CELL_SIZE);
 
-                let canPlace = true;
-                for (let { x: dx, y: dy } of block.cells) {
-                    const r = startR + dy;
-                    const c = startC + dx;
-                    if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS || this.board[r][c].type !== -1) {
-                        canPlace = false;
-                        break;
+                    let canPlace = true;
+                    for (let { x: dx, y: dy } of block.cells) {
+                        const r = startR + dy;
+                        const c = startC + dx;
+                        if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS || this.board[r][c].type !== -1) {
+                            canPlace = false;
+                            break;
+                        }
                     }
-                }
 
-                if (!canPlace) return;
+                    if (!canPlace) return;
 
-                for (let { x: dx, y: dy, type } of block.cells) {
-                    const r = startR + dy;
-                    const c = startC + dx;
-                    this.board[r][c].setType(type);
-                    this.updateCellGraphic(r, c);
-                }
+                    for (let { x: dx, y: dy, type } of block.cells) {
+                        const r = startR + dy;
+                        const c = startC + dx;
+                        this.board[r][c].setType(type);
+                        this.updateCellGraphic(r, c);
+                    }
 
-                this.currentBlocks.splice(blockIndex, 1);
+                    // Thay vì splice (làm shift vị trí các slot), giữ slot cố định và clear nội dung
+                    this.currentBlocks[blockIndex] = null;
 
-                if (this.currentBlocks.length === 0) {
-                    this.generateNewBlocks();
-                }
+                    // Nếu cả 3 slot đều trống -> tạo bộ block mới
+                    if (this.currentBlocks.every(b => !b)) {
+                        this.generateNewBlocks();
+                    }
 
-                this.checkMatches();
-                this.renderBlockPreviews();
-                this.updateUI();
+                    this.checkMatches();
+                    this.renderBlockPreviews();
+                    this.updateUI();
+    
             }
 
             updateCellGraphic(row, col) {
