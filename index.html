@@ -272,8 +272,8 @@
                 [0xFF9393, 0xFFAB6B, 0x75DC63, 0x3DD0D7, 0x4646C6, 0x862F58, 0xD51317],
             ];
 
-            static comboColorForLightCells(combo) {
-                switch (combo) {
+            static comboColorForLightCells(comboType) {
+                switch (comboType) {
                 case combo["Great"]:
                     return ComboData.greatCellColor;
                 case combo["Awesome"]:
@@ -331,7 +331,7 @@
             BOARD_COLS: 8,
             BOARD_ROWS: 8,
             CELL_SIZE: 60,
-            CELL_PADDING: 4,
+            CELL_PADDING: 5,
             CELL_BORDER_WIDTH: 3,
             CELL_BORDER_RADIUS: 5,
             BOARD_OFFSET_X: 10,
@@ -427,7 +427,7 @@
                 this.type = type;
                 this.graphic = null;
             }
-            renderHighlightGreen() {
+            renderHighlightGreen(comboColors) {
                 const { CELL_SIZE, CELL_PADDING, CELL_BORDER_WIDTH, CELL_BORDER_RADIUS } = CONFIG;
 
                 const newGraphic = new PIXI.Graphics();
@@ -435,22 +435,39 @@
                 const innerX = CELL_PADDING;
                 const innerY = CELL_PADDING;
 
-                // Padding: gradient xanh
-                const gradientTexture = this.createGradientTexture(CELL_SIZE, CELL_SIZE, '#2E7D32', '#00C853');
-                newGraphic.beginTextureFill({ texture: gradientTexture });
+                let padColors = null;
+                let innerColors = null;
+                if (Array.isArray(comboColors) && comboColors.length >= 2) {
+                    innerColors = comboColors[0];
+                    padColors = comboColors[1];
+                }
+
+                if (Array.isArray(padColors) && padColors.length >= 2) {
+                    const padCss = padColors.map(c => typeof c === 'string' ? c : this.intToCssHex(c));
+                    const gradientTexture = this.createEvenGradientTextureStops(CELL_SIZE, CELL_SIZE, padCss, 'diagonal');
+                    newGraphic.beginTextureFill({ texture: gradientTexture });
+                } else {
+                    const gradientTexture = this.createGradientTexture(CELL_SIZE, CELL_SIZE, '#2E7D32', '#00C853', 'diagonal');
+                    newGraphic.beginTextureFill({ texture: gradientTexture });
+                }
                 newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
                 newGraphic.endFill();
 
-                // Background: xanh
-                newGraphic.beginFill(0x00FF00);
+                if (Array.isArray(innerColors) && innerColors.length >= 2) {
+                    const innerCss = innerColors.map(c => typeof c === 'string' ? c : this.intToCssHex(c));
+                    const gradientTextureInner = this.createLinearGradientTextureStops(innerSize, innerSize, innerCss, 'vertical');
+                    const m = new PIXI.Matrix();
+                    m.translate(innerX, innerY);
+                    newGraphic.beginTextureFill({ texture: gradientTextureInner, matrix: m });
+                } else {
+                    newGraphic.beginFill(0x00FF00);
+                }
                 newGraphic.drawRoundedRect(innerX, innerY, innerSize, innerSize, CELL_BORDER_RADIUS);
                 newGraphic.endFill();
 
-                // Border giữ mặc định
                 newGraphic.lineStyle(CELL_BORDER_WIDTH, parseInt(CONFIG.CELL_BORDER_COLOR.slice(1), 16));
                 newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
 
-                // Giữ icon theo loại
                 const icon = this.createIcon(this.type);
                 icon.position.set(CELL_SIZE / 2, CELL_SIZE / 2);
                 this.iconGraphic = icon;
@@ -566,11 +583,137 @@
                 const baseTexture = PIXI.BaseTexture.from(canvas, {
                     scaleMode: PIXI.SCALE_MODES.LINEAR, // mượt hơn
                 });
-
+                
                 // 6. Trả về texture
                 return new PIXI.Texture(baseTexture);
             }
 
+            createGradientTextureStops(width, height, colors, direction = 'vertical') {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                let gradient;
+                switch (direction) {
+                    case 'horizontal':
+                        gradient = ctx.createLinearGradient(0, 0, width, 0);
+                        break;
+                    case 'diagonal':
+                        gradient = ctx.createLinearGradient(0, 0, width, height);
+                        break;
+                    case 'vertical':
+                    default:
+                        gradient = ctx.createLinearGradient(0, 0, 0, height);
+                        break;
+                }
+                const stops = Array.isArray(colors) ? colors : [];
+                const n = stops.length;
+                if (n === 0) {
+                    gradient.addColorStop(0, '#000000');
+                    gradient.addColorStop(1, '#000000');
+                } else if (n === 1) {
+                    gradient.addColorStop(0, stops[0]);
+                    gradient.addColorStop(1, stops[0]);
+                } else {
+                    gradient.addColorStop(0, stops[0]);
+                    for (let i = 0; i < n; i++) {
+                        const center = (i + 0.5) / n;
+                        gradient.addColorStop(center, stops[i]);
+                    }
+                    gradient.addColorStop(1, stops[n - 1]);
+                }
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+                const baseTexture = PIXI.BaseTexture.from(canvas, {
+                    scaleMode: PIXI.SCALE_MODES.LINEAR,
+                });
+                return new PIXI.Texture(baseTexture);
+            }
+
+            createEvenGradientTextureStops(width, height, colors, direction = 'vertical', blend = 0.08) {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                let gradient;
+                switch (direction) {
+                    case 'horizontal':
+                        gradient = ctx.createLinearGradient(0, 0, width, 0);
+                        break;
+                    case 'diagonal':
+                        gradient = ctx.createLinearGradient(0, 0, width, height);
+                        break;
+                    case 'vertical':
+                    default:
+                        gradient = ctx.createLinearGradient(0, 0, 0, height);
+                        break;
+                }
+                const stops = Array.isArray(colors) ? colors : [];
+                const n = stops.length;
+                if (n === 0) {
+                    gradient.addColorStop(0, '#000000');
+                    gradient.addColorStop(1, '#000000');
+                } else if (n === 1) {
+                    gradient.addColorStop(0, stops[0]);
+                    gradient.addColorStop(1, stops[0]);
+                } else {
+                    gradient.addColorStop(0, stops[0]);
+                    for (let i = 0; i < n - 1; i++) {
+                        const boundary = (i + 1) / n;
+                        const a = Math.max(0, boundary - blend / 2);
+                        const b = Math.min(1, boundary + blend / 2);
+                        gradient.addColorStop(a, stops[i]);
+                        gradient.addColorStop(b, stops[i + 1]);
+                    }
+                    gradient.addColorStop(1, stops[n - 1]);
+                }
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+                const baseTexture = PIXI.BaseTexture.from(canvas, {
+                    scaleMode: PIXI.SCALE_MODES.LINEAR,
+                });
+                return new PIXI.Texture(baseTexture);
+            }
+
+            createLinearGradientTextureStops(width, height, colors, direction = 'vertical') {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                let gradient;
+                switch (direction) {
+                    case 'horizontal':
+                        gradient = ctx.createLinearGradient(0, 0, width, 0);
+                        break;
+                    case 'diagonal':
+                        gradient = ctx.createLinearGradient(0, 0, width, height);
+                        break;
+                    case 'vertical':
+                    default:
+                        gradient = ctx.createLinearGradient(0, 0, 0, height);
+                        break;
+                }
+                const stops = Array.isArray(colors) ? colors : [];
+                const n = stops.length;
+                if (n === 0) {
+                    gradient.addColorStop(0, '#000000');
+                    gradient.addColorStop(1, '#000000');
+                } else if (n === 1) {
+                    gradient.addColorStop(0, stops[0]);
+                    gradient.addColorStop(1, stops[0]);
+                } else {
+                    for (let i = 0; i < n; i++) {
+                        const pos = i / (n - 1);
+                        gradient.addColorStop(pos, stops[i]);
+                    }
+                }
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+                const baseTexture = PIXI.BaseTexture.from(canvas, {
+                    scaleMode: PIXI.SCALE_MODES.LINEAR,
+                });
+                return new PIXI.Texture(baseTexture);
+            }
 
             setType(type) {
                 this.type = type;
@@ -1138,14 +1281,18 @@
                         }
                     });
 
-                    // CHỈ HIGHLIGHT Ô ĐÃ CÓ ITEM (trên board) → đổi background + padding sang màu xanh
+                    const countRemove = toBeRemoved.size;
+                    const comboType = ComboData.getComboTypeFromCountGetCell(countRemove);
+                    const comboColors = comboType ? ComboData.comboColorForLightCells(comboType) : null;
+
+                    // CHỈ HIGHLIGHT Ô ĐÃ CÓ ITEM (trên board)
                     toBeRemoved.forEach(key => {
                         const [r, c] = key.split(',').map(Number);
                         const originalCell = this.board[r][c];
 
                         if (originalCell.type === -1) return;
 
-                        const newGraphic = originalCell.renderHighlightGreen();
+                        const newGraphic = originalCell.renderHighlightGreen(comboColors);
                         // Đảm bảo graphic mới giữ đúng vị trí trên lưới
                         newGraphic.position.set(c * CONFIG.CELL_SIZE, r * CONFIG.CELL_SIZE);
                         const spriteData = this.cellSprites.find(s => s.row === r && s.col === c);
@@ -1169,7 +1316,7 @@
                             const key = `${r},${c}`;
                             const shouldHighlight = toBeRemoved.has(key);
 
-                            const newGraphic = shouldHighlight ? dc.cell.renderHighlightGreen() : dc.cell.render();
+                            const newGraphic = shouldHighlight ? dc.cell.renderHighlightGreen(comboColors) : dc.cell.render();
                             newGraphic.position.copyFrom(dc.graphic.position);
 
                             const parent = dc.graphic.parent;
