@@ -354,7 +354,7 @@
             BOARD_PADDING: 8,
             BOARD_BORDER1_WIDTH: 7,
             BOARD_BORDER1_COLOR: 0x3d2817,
-            BOARD_BORDER2_WIDTH: 1,
+            BOARD_BORDER2_WIDTH: 2,
             BOARD_BORDER2_COLOR: 0xffffff,
             BOARD_BORDER_RADIUS: 15,
             BOARD_BG_COLOR: 0x6C3101,
@@ -477,7 +477,7 @@
                 return newGraphic;
             }
             render(indexCellX, indexCellY) {
-                const { CELL_SIZE, CELL_PADDING, CELL_BORDER_WIDTH, CELL_BORDER_RADIUS } = CONFIG;
+                let { CELL_SIZE, CELL_PADDING, CELL_BORDER_WIDTH, CELL_BORDER_RADIUS } = CONFIG;
 
                 const newGraphic = new PIXI.Graphics();
                 const innerSize = CELL_SIZE - CELL_PADDING * 2;
@@ -488,6 +488,7 @@
                     newGraphic.lineStyle(CELL_BORDER_WIDTH, parseInt(CONFIG.EMPTY_CELL_BORDER.slice(1), 16));
                     newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
                 } else {
+
                     const info = CONFIG.CELL_INFO_COLORS[this.type];
                     let gradientTexture;
                     if (info && info.gradientBackground && info.gradientBackground.length >= 2) {
@@ -1181,6 +1182,8 @@
                     this.draggedBlock.block.cells.forEach(({ x, y, type }) => {
                         const cell = new GameCell(type);
                         const graphic = cell.render(x - minX, y - minY);
+                        graphic.lineStyle(CONFIG.CELL_BORDER_WIDTH, 0xFFFFFF);
+                        graphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CONFIG.CELL_BORDER_RADIUS);
                         graphic.position.set((x - minX) * CELL_SIZE, (y - minY) * CELL_SIZE);
                         this.draggedBlock.dragGraphic.addChild(graphic);
                         this.draggedBlock.dragCells.push({ dx: x, dy: y, cell, graphic });
@@ -1255,7 +1258,10 @@
 
                     const isEmpty = this.board[r][c].type === -1;
                     const highlight = new PIXI.Graphics();
-                    highlight.beginFill(isEmpty ? 0x00FF00 : 0xFF0000, 0.3);
+                    const alpha = 0.6;
+                    const borderColor = isEmpty ? 0x00FF00 : 0xFF0000;
+                    highlight.lineStyle({ width: 2, color: borderColor, alignment: 1 });
+                    highlight.beginFill(isEmpty ? 0x00FF00 : 0xFF0000, alpha);
                     highlight.drawRect(0, 0, CELL_SIZE, CELL_SIZE);
                     highlight.endFill();
 
@@ -1293,6 +1299,8 @@
                         if (originalCell.type === -1) return;
 
                         const newGraphic = originalCell.renderHighlightGreen(comboColors);
+                        newGraphic.lineStyle(CONFIG.CELL_BORDER_WIDTH, 0xFFFFFF);
+                        newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CONFIG.CELL_BORDER_RADIUS);
                         // Đảm bảo graphic mới giữ đúng vị trí trên lưới
                         newGraphic.position.set(c * CONFIG.CELL_SIZE, r * CONFIG.CELL_SIZE);
                         const spriteData = this.cellSprites.find(s => s.row === r && s.col === c);
@@ -1317,6 +1325,8 @@
                             const shouldHighlight = toBeRemoved.has(key);
 
                             const newGraphic = shouldHighlight ? dc.cell.renderHighlightGreen(comboColors) : dc.cell.render();
+                            newGraphic.lineStyle(CONFIG.CELL_BORDER_WIDTH, 0xFFFFFF);
+                            newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CONFIG.CELL_BORDER_RADIUS);
                             newGraphic.position.copyFrom(dc.graphic.position);
 
                             const parent = dc.graphic.parent;
@@ -1334,6 +1344,8 @@
                     if (this.draggedBlock?.dragCells && this.draggedBlock.dragCells.length) {
                         this.draggedBlock.dragCells.forEach(dc => {
                             const newGraphic = dc.cell.render();
+                            newGraphic.lineStyle(CONFIG.CELL_BORDER_WIDTH, 0xFFFFFF);
+                            newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CONFIG.CELL_BORDER_RADIUS);
                             newGraphic.position.copyFrom(dc.graphic.position);
                             const parent = dc.graphic.parent;
                             const index = parent.children.indexOf(dc.graphic);
