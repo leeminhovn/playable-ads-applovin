@@ -333,7 +333,7 @@
             CELL_SIZE: 60,
             CELL_PADDING: 4,
             CELL_BORDER_WIDTH: 3,
-            CELL_BORDER_RADIUS: 3,
+            CELL_BORDER_RADIUS: 5,
             BOARD_OFFSET_X: 10,
             BOARD_OFFSET_Y: 60,
             BLOCK_LIST_TOP_MARGIN: 20,
@@ -469,17 +469,21 @@
                     newGraphic.lineStyle(CELL_BORDER_WIDTH, parseInt(CONFIG.EMPTY_CELL_BORDER.slice(1), 16));
                     newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
                 } else {
-                    // Tạo gradient texture cho padding layer (từ xanh tới đỏ, vertical)
-                    const gradientTexture = this.createGradientTexture(CELL_SIZE, CELL_SIZE, '#0000FF', '#FF0000'); // Xanh: blue, Đỏ: red
-
-                    // Vẽ outer với gradient fill
+                    const info = CONFIG.CELL_INFO_COLORS[this.type];
+                    let gradientTexture;
+                    if (info && info.gradientBackground && info.gradientBackground.length >= 2) {
+                        const fromCss = this.intToCssHex(info.gradientBackground[0]);
+                        const toCss = this.intToCssHex(info.gradientBackground[1]);
+                        gradientTexture = this.createGradientTexture(CELL_SIZE, CELL_SIZE, fromCss, toCss);
+                    } else {
+                        gradientTexture = this.createGradientTexture(CELL_SIZE, CELL_SIZE, '#000000', '#000000');
+                    }
                     newGraphic.beginTextureFill({ texture: gradientTexture });
                     newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
                     newGraphic.endFill();
 
-                    // Vẽ inner background solid color lên trên để tạo padding gradient visible chỉ ở viền
-                    const colorHex = parseInt(CONFIG.CELL_COLORS[this.type].slice(1), 16);
-                    newGraphic.beginFill(colorHex);
+                    const innerColor = info ? (info.innerBackground & 0xFFFFFF) : parseInt(CONFIG.CELL_COLORS[this.type].slice(1), 16);
+                    newGraphic.beginFill(innerColor);
                     newGraphic.drawRoundedRect(innerX, innerY, innerSize, innerSize, CELL_BORDER_RADIUS);
                     newGraphic.endFill();
 
@@ -503,7 +507,7 @@
                     const texture = PIXI.Texture.from(iconBase64);
                     const sprite = new PIXI.Sprite(texture);
 
-                    const iconSize = CONFIG.CELL_SIZE * 0.6;
+                    const iconSize = CONFIG.CELL_SIZE * 0.8;
                     sprite.width = iconSize;
                     sprite.height = iconSize;
                     sprite.anchor.set(0.5, 0.5);
@@ -517,6 +521,11 @@
                     text.anchor.set(0.5, 0.5);
                     return text;
                 }
+            }
+            
+            intToCssHex(colorInt) {
+                const rgb = (colorInt & 0xFFFFFF).toString(16).padStart(6, '0');
+                return `#${rgb}`;
             }
             
             createGradientTexture(width, height, fromColor, toColor, direction = 'vertical') {
@@ -1322,6 +1331,29 @@
                 }
             }
 
+            spawnFloatText(row, col, text = '+1', color = 0x00FF00) {
+                const { CELL_SIZE } = CONFIG;
+                const style = new PIXI.TextStyle({ fill: color, fontSize: 20, fontWeight: '700' });
+                const t = new PIXI.Text(text, style);
+                t.anchor.set(0.5);
+                t.position.set(col * CELL_SIZE + CELL_SIZE / 2, row * CELL_SIZE + CELL_SIZE * 0.8);
+                this.boardContainer.addChild(t);
+                const startY = t.y;
+                let elapsed = 0;
+                const update = () => {
+                    elapsed += this.app.ticker.deltaMS;
+                    const p = Math.min(elapsed / 300, 1);
+                    t.y = startY - 40 * p;
+                    if (p >= 1) {
+                        this.app.ticker.remove(update);
+                        setTimeout(() => {
+                            if (t.parent) t.parent.removeChild(t);
+                        }, 150);
+                    }
+                };
+                this.app.ticker.add(update);
+            }
+
             checkMatches() {
                 const { BOARD_ROWS, BOARD_COLS } = CONFIG;
                 let matched = new Set();
@@ -1342,6 +1374,7 @@
                         const [r, c] = key.split(',').map(Number);
                         this.board[r][c].setType(-1);
                         this.updateCellGraphic(r, c);
+                        this.spawnFloatText(r, c, '+1', 0x00FF00);
                         this.score++;
                     });
 
