@@ -452,6 +452,7 @@
                 // Giữ icon theo loại
                 const icon = this.createIcon(this.type);
                 icon.position.set(CELL_SIZE / 2, CELL_SIZE / 2);
+                this.iconGraphic = icon;
                 newGraphic.addChild(icon);
 
                 this.graphic = newGraphic;
@@ -492,9 +493,11 @@
                     newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
 
                     // Thêm icon
-                    const icon = this.createIcon(this.type);
-                    icon.position.set(CELL_SIZE / 2, CELL_SIZE / 2);
-                    newGraphic.addChild(icon);
+                const icon = this.createIcon(this.type);
+                icon.position.set(CELL_SIZE / 2, CELL_SIZE / 2);
+             
+                this.iconGraphic = icon;
+                newGraphic.addChild(icon);
                 }
 
                 this.graphic = newGraphic;
@@ -677,6 +680,9 @@
             this.app.stage.addChild(this.blocksContainer);
 
                 this.createProgressBar();
+
+                this.fxContainer = new PIXI.Container();
+                this.app.stage.addChild(this.fxContainer);
 
                 this.app.stage.interactive = true;
             }
@@ -1354,6 +1360,41 @@
                 this.app.ticker.add(update);
             }
 
+            spawnCellCloneToProgress(row, col, durationMs = 400) {
+                const { CELL_SIZE } = CONFIG;
+                const cell = this.board[row][col];
+                if (!cell) return;
+                const source = cell.iconGraphic || cell.graphic;
+                if (!source) return;
+                const tex = this.app.renderer.generateTexture(source);
+                const sprite = new PIXI.Sprite(tex);
+                sprite.anchor.set(0.5);
+                const iconX = cell.iconGraphic ? cell.iconGraphic.x : CELL_SIZE / 2;
+                const iconY = cell.iconGraphic ? cell.iconGraphic.y : CELL_SIZE / 2;
+                const startX = this.boardContainer.x + col * CELL_SIZE + iconX;
+                const startY = this.boardContainer.y + row * CELL_SIZE + iconY;
+                sprite.width = CONFIG.CELL_SIZE * 0.8;
+                sprite.height = CONFIG.CELL_SIZE * 0.8;
+                sprite.position.set(startX, startY);
+                this.fxContainer.addChild(sprite);
+
+                const destX = this.progressContainer.x + this.progressLayout.barWidth / 2;
+                const destY = this.progressContainer.y + this.progressLayout.barHeight / 2;
+
+                let elapsed = 0;
+                const update = () => {
+                    elapsed += this.app.ticker.deltaMS;
+                    const t = Math.min(elapsed / durationMs, 1);
+                    sprite.x = startX + (destX - startX) * t;
+                    sprite.y = startY + (destY - startY) * t;
+                    if (t >= 1) {
+                        this.app.ticker.remove(update);
+                        if (sprite.parent) sprite.parent.removeChild(sprite);
+                    }
+                };
+                this.app.ticker.add(update);
+            }
+
             checkMatches() {
                 const { BOARD_ROWS, BOARD_COLS } = CONFIG;
                 let matched = new Set();
@@ -1372,6 +1413,7 @@
                 if (matched.size > 0) {
                     matched.forEach(key => {
                         const [r, c] = key.split(',').map(Number);
+                        this.spawnCellCloneToProgress(r, c, 300);
                         this.board[r][c].setType(-1);
                         this.updateCellGraphic(r, c);
                         this.spawnFloatText(r, c, '+1', 0x00FF00);
