@@ -351,9 +351,18 @@
             PROGRESS_BORDER_WIDTH: 4,
             PROGRESS_TO_BOARD_GAP: 12,
             CANVAS_BOTTOM_EXTRA: 40,
+            BOARD_PADDING: 8,
+            BOARD_BORDER1_WIDTH: 7,
+            BOARD_BORDER1_COLOR: 0x3d2817,
+            BOARD_BORDER2_WIDTH: 1,
+            BOARD_BORDER2_COLOR: 0xffffff,
+            BOARD_BORDER_RADIUS: 15,
+            BOARD_BG_COLOR: 0x6C3101,
             CELL_COLORS: ['#FF6B35', '#F7931E', '#FDC830', '#4ECDC4', '#95E1D3'],
-            CELL_BORDER_COLOR: '#3d2817',
-            EMPTY_CELL_BG: '#1a0f0a',
+            CELL_BORDER_COLOR: '#6C3101',
+            EMPTY_CELL_BG: '#0000000',
+            EMPTY_CELL_BG_2: '#1E1E1E',
+
             EMPTY_CELL_BORDER: '#3d2817',
             LEVEL_MILESTONES: [0, 500, 1000, 1500, 2000],
             USE_BASE64_ICONS: true,
@@ -448,7 +457,7 @@
                 this.graphic = newGraphic;
                 return newGraphic;
             }
-            render() {
+            render(indexCellX, indexCellY) {
                 const { CELL_SIZE, CELL_PADDING, CELL_BORDER_WIDTH, CELL_BORDER_RADIUS } = CONFIG;
 
                 const newGraphic = new PIXI.Graphics();
@@ -457,11 +466,8 @@
                 const innerY = CELL_PADDING;
 
                 if (this.type === -1) {
-                    // Giữ nguyên kích thước đầy đủ cho cell empty, không trừ padding
-                    newGraphic.beginFill(parseInt(CONFIG.EMPTY_CELL_BG.slice(1), 16));
                     newGraphic.lineStyle(CELL_BORDER_WIDTH, parseInt(CONFIG.EMPTY_CELL_BORDER.slice(1), 16));
                     newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
-                    newGraphic.endFill();
                 } else {
                     // Tạo gradient texture cho padding layer (từ xanh tới đỏ, vertical)
                     const gradientTexture = this.createGradientTexture(CELL_SIZE, CELL_SIZE, '#0000FF', '#FF0000'); // Xanh: blue, Đỏ: red
@@ -592,7 +598,7 @@
 
                 this.cells.forEach(({ x, y, type }) => {
                     const cell = new GameCell(type);
-                    const graphic = cell.render();
+                    const graphic = cell.render(x, y);
                     graphic.position.set(offsetX + x * CELL_SIZE, offsetY + y * CELL_SIZE);
                     container.addChild(graphic);
                     this.cellObjects.push({ cell, graphic, x, y, type });
@@ -620,7 +626,7 @@
                 const boardW = CELL_SIZE * BOARD_COLS;
                 const boardH = CELL_SIZE * BOARD_ROWS;
                 const canvasWidth = boardW + CONFIG.BOARD_OFFSET_X * 2;
-                const canvasHeight = CONFIG.PROGRESS_HEIGHT + CONFIG.PROGRESS_TO_BOARD_GAP + CONFIG.BOARD_OFFSET_Y + boardH + CONFIG.BLOCK_LIST_TOP_MARGIN + CONFIG.BLOCK_LIST_SLOT_WIDTH + CONFIG.CANVAS_BOTTOM_EXTRA;
+                const canvasHeight = CONFIG.PROGRESS_HEIGHT + CONFIG.PROGRESS_TO_BOARD_GAP + CONFIG.BOARD_OFFSET_Y + boardH + CONFIG.BOARD_PADDING * 2 + CONFIG.BLOCK_LIST_TOP_MARGIN + CONFIG.BLOCK_LIST_SLOT_WIDTH + CONFIG.CANVAS_BOTTOM_EXTRA;
 
                 this.app = new PIXI.Application({
                     width: canvasWidth,
@@ -752,7 +758,7 @@
                 this.nextText.position.set(boardWidth - pad - sideW / 2, barHeight / 2);
                 cont.addChild(this.nextText);
 
-                const styleCenter = new PIXI.TextStyle({ fill: 0x45E36F, fontSize: 22, fontFamily: 'Odibee Sans' });
+                const styleCenter = new PIXI.TextStyle({ fill: 0xFFCA1B, fontSize: 22, fontFamily: 'Odibee Sans', fontWeight: '600' });
                 this.centerText = new PIXI.Text('', styleCenter);
                 this.centerText.anchor.set(0.5);
                 this.centerText.position.set(boardWidth / 2, barHeight / 2);
@@ -783,15 +789,28 @@
 
             drawBoardBackground() {
                 const { BOARD_COLS, BOARD_ROWS, CELL_SIZE } = CONFIG;
-                const bg = new PIXI.Graphics();
-                const x = CONFIG.BOARD_OFFSET_X;
-                const y = CONFIG.PROGRESS_HEIGHT + CONFIG.PROGRESS_TO_BOARD_GAP + CONFIG.BOARD_OFFSET_Y;
-                const w = CELL_SIZE * BOARD_COLS;
-                const h = CELL_SIZE * BOARD_ROWS;
+                const pad = CONFIG.BOARD_PADDING;
+                const x = CONFIG.BOARD_OFFSET_X - pad;
+                const y = CONFIG.PROGRESS_HEIGHT + CONFIG.PROGRESS_TO_BOARD_GAP + CONFIG.BOARD_OFFSET_Y - pad;
+                const w = CELL_SIZE * BOARD_COLS + pad * 2;
+                const h = CELL_SIZE * BOARD_ROWS + pad * 2;
+                const r = CONFIG.BOARD_BORDER_RADIUS;
 
-                bg.lineStyle(8, 0x3d2817);
-                bg.drawRoundedRect(x, y, w, h, 15);
-                this.app.stage.addChildAt(bg, 0);
+                const fill = new PIXI.Graphics();
+                fill.beginFill(CONFIG.BOARD_BG_COLOR);
+                fill.drawRoundedRect(x, y, w, h, r);
+                fill.endFill();
+                this.app.stage.addChildAt(fill, 0);
+
+                const frame1 = new PIXI.Graphics();
+                frame1.lineStyle({ width: CONFIG.BOARD_BORDER1_WIDTH, color: CONFIG.BOARD_BORDER1_COLOR, alignment: 0 });
+                frame1.drawRoundedRect(x, y, w, h, r);
+                this.app.stage.addChildAt(frame1, 1);
+
+                const frame2 = new PIXI.Graphics();
+                frame2.lineStyle({ width: CONFIG.BOARD_BORDER2_WIDTH, color: CONFIG.BOARD_BORDER2_COLOR, alignment: 0 });
+                frame2.drawRoundedRect(x, y, w, h, r);
+                this.app.stage.addChildAt(frame2, 2);
             }
 
             initBoard() {
@@ -799,16 +818,32 @@
                 this.board = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
                 this.cellSprites = [];
 
+                this.renderBoardPattern();
+
                 for (let r = 0; r < BOARD_ROWS; r++) {
                     for (let c = 0; c < BOARD_COLS; c++) {
                         const cell = new GameCell();
-                        cell.graphic = cell.render();
+                        cell.graphic = cell.render(c, r);
                         cell.graphic.position.set(c * CONFIG.CELL_SIZE, r * CONFIG.CELL_SIZE);
                         this.boardContainer.addChild(cell.graphic);
                         this.board[r][c] = cell;
                         this.cellSprites.push({ cell, graphic: cell.graphic, row: r, col: c });
                     }
                 }
+            }
+
+            renderBoardPattern() {
+                const { BOARD_COLS, BOARD_ROWS, CELL_SIZE } = CONFIG;
+                const g = new PIXI.Graphics();
+                for (let r = 0; r < BOARD_ROWS; r++) {
+                    for (let c = 0; c < BOARD_COLS; c++) {
+                        const colorHex = (r + c) % 2 === 0 ? parseInt(CONFIG.EMPTY_CELL_BG.slice(1), 16) : parseInt(CONFIG.EMPTY_CELL_BG_2.slice(1), 16);
+                        g.beginFill(colorHex);
+                        g.drawRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        g.endFill();
+                    }
+                }
+                this.boardContainer.addChildAt(g, 0);
             }
 
             initGame() {
@@ -986,7 +1021,7 @@
 
                     this.draggedBlock.block.cells.forEach(({ x, y, type }) => {
                         const cell = new GameCell(type);
-                        const graphic = cell.render();
+                        const graphic = cell.render(x - minX, y - minY);
                         graphic.position.set((x - minX) * CELL_SIZE, (y - minY) * CELL_SIZE);
                         this.draggedBlock.dragGraphic.addChild(graphic);
                         this.draggedBlock.dragCells.push({ dx: x, dy: y, cell, graphic });
