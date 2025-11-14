@@ -37,6 +37,178 @@
             
         }
 
+        .milestone-popup-overlay {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+        }
+        .milestone-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            width: min(80vw, 320px);
+            --popupW: min(80vw, 320px);
+        }
+        .milestone-title {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 900;
+            font-size: clamp(20px, calc(var(--popupW) * 0.11), 36px);
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        .milestone-title-wrap {
+            display: grid;
+            place-items: center;
+            width: 100%;
+        }
+        .milestone-title-border {
+            grid-area: 1 / 1;
+            color: #A0940F;
+            text-shadow:
+                0 0 0 #A0940F,
+                1px 0 #A0940F,
+                -1px 0 #A0940F,
+                0 1px #A0940F,
+                0 -1px #A0940F,
+                1px 1px #A0940F,
+                -1px -1px #A0940F,
+                -1px 1px #A0940F,
+                1px -1px #A0940F;
+        }
+        .milestone-title-fore {
+            grid-area: 1 / 1;
+            color: #FDFD01;
+            text-shadow: 0 4px 0 #A04C0F;
+        }
+        .milestone-card {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            display: grid;
+            grid-template-rows: min-content 1fr;
+            border-radius: 22px;
+            background: radial-gradient(circle at 50% 50%, #2F7F2D 0%, #192E19 100%);
+            border: 5px solid #FF8A00;
+            padding: 14px 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+            animation: pop-scale 240ms ease-out;
+        }
+        .milestone-subtitle {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 900;
+            font-size: clamp(14px, calc(var(--popupW) * 0.07), 22px);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .milestone-subtitle-wrap {
+            display: grid;
+            place-items: center;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .milestone-subtitle-border {
+            grid-area: 1 / 1;
+            color: #A04C0F;
+            text-shadow:
+                0 0 0 #A04C0F,
+                1px 0 #A04C0F,
+                -1px 0 #A04C0F,
+                0 1px #A04C0F,
+                0 -1px #A04C0F,
+                1px 1px #A04C0F,
+                -1px -1px #A04C0F,
+                -1px 1px #A04C0F,
+                1px -1px #A04C0F;
+        }
+        .milestone-subtitle-fore {
+            grid-area: 1 / 1;
+            color: #FDA101;
+            text-shadow: 0 3px 0 #A04C0F;
+        }
+        .milestone-score {
+            display: grid;
+            place-items: center;
+            height: 100%;
+            border-radius: 16px;
+            background: #0D1C12;
+        }
+        .milestone-score-value {
+            font-family: 'Odibee Sans', sans-serif;
+            color: #FFC61B;
+            font-size: clamp(32px, calc(var(--popupW) * 0.20), 64px);
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 0 #5A2E0A;
+        }
+        .milestone-actions { display: grid; place-items: center; margin-top: 22px }
+
+        .ui-btn {
+            --btnW: min(60vw, 260px);
+            --btnH: clamp(36px, 7.5vw, 52px);
+            position: relative;
+            display: inline-grid;
+            place-items: center;
+            width: var(--btnW);
+            height: var(--btnH);
+            border-radius: 9999px;
+            background: linear-gradient(180deg, #1ED760 0%, #13B94F 100%);
+            border: 4px solid #148F42;
+            box-shadow:
+                0 6px 0 #7A3A1C inset,
+                0 -6px 0 #A25E38 inset,
+                0 6px 12px rgba(0,0,0,0.35);
+            cursor: pointer;
+            transition: transform 140ms ease;
+        }
+        .ui-btn::before,
+        .ui-btn::after {
+            content: "";
+            position: absolute;
+            inset: -6px;
+            border-radius: 9999px;
+            pointer-events: none;
+        }
+        .ui-btn::before { box-shadow: 0 0 0 8px #8A4A2A inset }
+        .ui-btn::after { box-shadow: 0 0 0 14px #5E2E17 inset }
+        .ui-btn:hover { transform: translateY(-1px) }
+        .ui-btn:active { transform: translateY(1px) }
+
+        .ui-btn-text-wrap { display: grid; place-items: center; padding: 0 16px }
+        .ui-btn-text { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: clamp(14px, calc(var(--btnW) * 0.09), 20px); letter-spacing: 1px }
+        .ui-btn-text-border {
+            grid-area: 1 / 1; color: #2C2C2C; text-shadow:
+                0 0 0 #2C2C2C,
+                1px 0 #2C2C2C,
+                -1px 0 #2C2C2C,
+                0 1px #2C2C2C,
+                0 -1px #2C2C2C,
+                1px 1px #2C2C2C,
+                -1px -1px #2C2C2C,
+                -1px 1px #2C2C2C,
+                1px -1px #2C2C2C;
+        }
+        .ui-btn-text-fore { grid-area: 1 / 1; color: #FFFFFF; text-shadow: 0 2px 0 rgba(0,0,0,0.35) }
+
+        @media (max-width: 480px) {
+            .ui-btn { --btnW: min(70vw, 240px); --btnH: clamp(34px, 9vw, 50px) }
+        }
+        @keyframes pop-scale {
+            from { transform: scale(0.92); opacity: 0 }
+            60% { transform: scale(1.05); opacity: 1 }
+            to { transform: scale(1); opacity: 1 }
+        }
+        
+        @media (max-width: 480px) {
+            .milestone-content { width: min(86vw, 300px); gap: 10px; --popupW: min(86vw, 300px) }
+            .milestone-card { border-width: 4px; padding: 12px }
+            .milestone-score-value { font-size: clamp(30px, calc(var(--popupW) * 0.18), 58px) }
+        }
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .milestone-content { transform: scale(0.9) }
+        }
         
 
         @keyframes bg-scroll {
@@ -183,8 +355,46 @@
                 <div id="gameCanvas"></div>
             </div>
         </div>
+        <div id="milestonePopup" class="milestone-popup-overlay" hidden>
+            <div class="milestone-content">
+                <div class="milestone-title-wrap">
+                    <div class="milestone-title milestone-title-border">INCREDIBLE!</div>
+                    <div class="milestone-title milestone-title-fore">INCREDIBLE!</div>
+                </div>
+                <div class="milestone-card">
+                    <div class="milestone-subtitle-wrap">
+                        <div class="milestone-subtitle milestone-subtitle-border">MILESTONE REACHED!</div>
+                        <div class="milestone-subtitle milestone-subtitle-fore">MILESTONE REACHED!</div>
+                    </div>
+                    <div class="milestone-score">
+                        <div id="milestoneScore" class="milestone-score-value">0</div>
+                    </div>
+                </div>
+                <div class="milestone-actions">
+                    <div style="width: 218px; height: 64px; position: relative">
+                        <div style="width: 218px; height: 64px; left: 0px; top: 0px; position: absolute; background: #250F12; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 26px; outline: 2px #250F12 solid"></div>
+                        <div style="width: 218px; height: 64px; left: 0px; top: 0px; position: absolute; background: #CB7D42; border-radius: 26px; border: 2px #A35A45 solid"></div>
+                        <div style="width: 206px; height: 54px; left: 6px; top: 5px; position: absolute; background: linear-gradient(360deg, #33653E 82%, #61E96E 100%); box-shadow: 0px 2px 0px #A35A45; border-radius: 20px; outline: 4px #5A3137 solid; outline-offset: -2px"></div>
+                        <div style="width: 196px; height: 44px; left: 11px; top: 10px; position: absolute; background: #00C040; border-radius: 17px; border: 1px #72FF48 solid"></div>
+                        <div style="width: 163px; height: 45px; left: 26px; top: 12px; position: absolute; display: grid; place-items: center;">
+                            <div style="grid-area: 1 / 1; color: #2C2C2C; font-size: 24px; font-family: Nunito; font-weight: 900; text-shadow:
+                                0 0 0 #2C2C2C,
+                                1px 0 #2C2C2C,
+                                -1px 0 #2C2C2C,
+                                0 1px #2C2C2C,
+                                0 -1px #2C2C2C,
+                                1px 1px #2C2C2C,
+                                -1px -1px #2C2C2C,
+                                -1px 1px #2C2C2C,
+                                1px -1px #2C2C2C;">CONTINUE</div>
+                            <div style="grid-area: 1 / 1; color: #FFFFFF; font-size: 24px; font-family: Nunito; font-weight: 900; text-shadow: 0 -3px 0 rgba(0,0,0,0.35);">CONTINUE</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
+    <!-- <script></script> -->
     <script>
         const combo = Object.freeze({
             "Great": 'Great',
@@ -1113,6 +1323,9 @@
             initGame() {
                 this.score = 0;
                 this.level = 1;
+                this.prevLevel = 1;
+                this.prevScore = 0;
+                this.lastMilestoneShown = null;
                 this.currentBlocks = [];
                 this.draggedBlock = null;
                 // Track các ô board đã highlight để restore mỗi frame
@@ -2030,6 +2243,28 @@
                 const currentMilestone = CONFIG.LEVEL_MILESTONES[this.level - 1] || 0;
                 const nextMilestone = CONFIG.LEVEL_MILESTONES[this.level] || currentMilestone + 500;
                 this.updateProgressBar(currentMilestone, nextMilestone);
+                const last = this.prevScore || 0;
+                for (let i = 0; i < CONFIG.LEVEL_MILESTONES.length; i++) {
+                    const m = CONFIG.LEVEL_MILESTONES[i];
+                    if (last < m && this.score >= m && this.lastMilestoneShown !== m) {
+                        this.showMilestonePopup(m);
+                        this.lastMilestoneShown = m;
+                        break;
+                    }
+                }
+                this.prevScore = this.score;
+            }
+
+            showMilestonePopup(milestone) {
+                const el = document.getElementById('milestonePopup');
+                const sv = document.getElementById('milestoneScore');
+                if (!el || !sv) return;
+                sv.textContent = milestone.toLocaleString('en-US');
+                el.hidden = false;
+                clearTimeout(this._milestoneHideTimer);
+                this._milestoneHideTimer = setTimeout(() => {
+                    el.hidden = true;
+                }, 1800);
             }
 
             showLoading() {
