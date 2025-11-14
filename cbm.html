@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puzzle Block Game</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.3/pixi.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Odibee+Sans&display=swap" rel="stylesheet">
@@ -40,11 +40,12 @@
         .milestone-popup-overlay {
             position: fixed;
             inset: 0;
-            display: grid;
+            display: none;
             place-items: center;
             background: rgba(0, 0, 0, 0.8);
             z-index: 2000;
         }
+        .milestone-popup-overlay.show { display: grid }
         .milestone-content {
             display: flex;
             flex-direction: column;
@@ -900,25 +901,31 @@
             }
 
             createIcon(type) {
-                if (CONFIG.USE_BASE64_ICONS) {
-                    const iconBase64 = CONFIG.CELL_ICONS_BASE64[type];
-                    const texture = PIXI.Texture.from(iconBase64);
-                    const sprite = new PIXI.Sprite(texture);
-
-                    const iconSize = CONFIG.CELL_SIZE * 0.8;
-                    sprite.width = iconSize;
-                    sprite.height = iconSize;
-                    sprite.anchor.set(0.5, 0.5);
-
-                    return sprite;
-                } else {
-                    const text = new PIXI.Text(CONFIG.CELL_ICONS_EMOJI[type], {
-                        fontSize: 28,
-                        fill: '#ffffff'
-                    });
+                if (!CONFIG.USE_BASE64_ICONS) {
+                    const text = new PIXI.Text(CONFIG.CELL_ICONS_EMOJI[type], { fontSize: 28, fill: '#ffffff' });
                     text.anchor.set(0.5, 0.5);
                     return text;
                 }
+                const pre = CONFIG._ICON_TEXTURES && CONFIG._ICON_TEXTURES[type];
+                const src = CONFIG.CELL_ICONS_BASE64 && CONFIG.CELL_ICONS_BASE64[type];
+                let texture = pre || (src ? PIXI.Texture.from(src) : null);
+                if (!texture) {
+                    return new PIXI.Graphics();
+                }
+                const sprite = new PIXI.Sprite(texture);
+                sprite.anchor.set(0.5, 0.5);
+                const applySize = () => {
+                   const iconSize = CONFIG.CELL_SIZE * 0.8;
+                   sprite.width = iconSize;
+                   sprite.height = iconSize;
+                };
+                if (sprite.texture && sprite.texture.baseTexture) {
+                    if (sprite.texture.baseTexture.valid) applySize();
+                    else sprite.texture.baseTexture.once('loaded', applySize);
+                } else {
+                    applySize();
+                }
+                return sprite;
             }
             
             intToCssHex(colorInt) {
@@ -1180,14 +1187,43 @@
                 return this.cells;
             }
         }
-
+        function preloadAssets() {
+                const promises = [];
+                CONFIG._ICON_TEXTURES = CONFIG._ICON_TEXTURES || [];
+                const icons = Array.isArray(CONFIG.CELL_ICONS_BASE64) ? CONFIG.CELL_ICONS_BASE64 : [];
+                for (let i = 0; i < icons.length; i++) {
+                    const src = icons[i];
+                    if (!src) continue;
+                    promises.push(new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => { try { CONFIG._ICON_TEXTURES[i] = PIXI.Texture.from(img); } catch (_) {} resolve(); };
+                        img.onerror = () => resolve();
+                        img.src = src;
+                    }));
+                }
+                if (CONFIG.IMAGE_HAND_TUTORIAL) {
+                    promises.push(new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => { try { CONFIG._HAND_TEXTURE = PIXI.Texture.from(img); } catch (_) {} resolve(); };
+                        img.onerror = () => resolve();
+                        img.src = CONFIG.IMAGE_HAND_TUTORIAL;
+                    }));
+                }
+                return Promise.all(promises);
+            }
         // ==================== GAME CLASS ====================
         class PuzzleBlockGame {
             constructor() {
                 this.initPixi();
                 this.initBoard();
-                this.initGame();
-                this.setupEvents();
+                const start = () => { this.initGame(); this.setupEvents(); };
+                preloadAssets().then(() => {
+                    if (typeof requestAnimationFrame === 'function') {
+                        requestAnimationFrame(() => setTimeout(start, 0));
+                    } else {
+                        setTimeout(start, 0);
+                    }
+                });
             }
 
             initPixi() {
@@ -1201,18 +1237,20 @@
                     width: canvasWidth,
                     backgroundAlpha: 0,
                     height: canvasHeight,
-                    preferWebGL: false,
                     antialias: true,
                     resolution: window.devicePixelRatio || 1,
                 });
 
                 const container = document.getElementById('gameCanvas');
                 container.appendChild(this.app.view);
-
+console.log('After Pixi init', this.app.view.width, this.app.view.height);
+console.log('Canvas in DOM?', container.contains(this.app.view));
+                try { this.app.start(); } catch (_) {}
                 this.resizeCanvas();
                 window.addEventListener('resize', () => this.resizeCanvas());
 
                 this.drawBoardBackground();
+                try { this.app.renderer.render(this.app.stage); } catch (_) {}
 
                 this.boardContainer = new PIXI.Container();
                 this.boardContainer.position.set(
@@ -1236,7 +1274,7 @@
                     boardX + (boardWidth - totalBlocksWidth) / 2,
                     CONFIG.PROGRESS_HEIGHT + CONFIG.PROGRESS_TO_BOARD_GAP + CONFIG.BOARD_OFFSET_Y + CONFIG.CELL_SIZE * CONFIG.BOARD_ROWS + CONFIG.BLOCK_LIST_TOP_MARGIN
                 );
-            this.app.stage.addChild(this.blocksContainer);
+                this.app.stage.addChild(this.blocksContainer);
 
                 const dragHintStyle = new PIXI.TextStyle({ fill: 0xFFFFFF, fontSize: 30, fontFamily: "Nunito", fontWeight: '900' });
                 const dragHint = new PIXI.Text('DRAG TO MATCH', dragHintStyle);
@@ -1441,27 +1479,31 @@
             }
 
             initGame() {
-                this.score = 0;
-                this.level = 1;
-                this.prevLevel = 1;
-                this.prevScore = this.score;
-                this.lastMilestoneShown = (CONFIG.LEVEL_MILESTONES && CONFIG.LEVEL_MILESTONES.length) ? CONFIG.LEVEL_MILESTONES[0] : 0;
-                this.hasPlayed = false;
-                this.placedCount = 0;
-                this.currentBlocks = [];
-                this.draggedBlock = null;
-                // Track các ô board đã highlight để restore mỗi frame
-                this.prevHighlightedBoardCells = new Set();
-                this.tutorialTurnIndex = 0;
-                this.activeTutorialTurnIndex = -1;
-                this.tutorialSelectedBlockPlaced = false;
-                
-                this.generateNewBlocks();
-                this.renderBlockPreviews();
-                this.updateUI();
-                this.hideLoading();
-                const goEl = document.getElementById('goScoreValue');
-                if (goEl) goEl.textContent = this.score.toLocaleString('en-US');
+                console.log('initGame: begin');
+                try {
+                    this.score = 0;
+                    this.level = 1;
+                    this.prevLevel = 1;
+                    this.prevScore = this.score;
+                    this.lastMilestoneShown = (CONFIG.LEVEL_MILESTONES && CONFIG.LEVEL_MILESTONES.length) ? CONFIG.LEVEL_MILESTONES[0] : 0;
+                    this.hasPlayed = false;
+                    this.placedCount = 0;
+                    this.currentBlocks = [];
+                    this.draggedBlock = null;
+                    this.prevHighlightedBoardCells = new Set();
+                    this.tutorialTurnIndex = 0;
+                    this.activeTutorialTurnIndex = -1;
+                    this.tutorialSelectedBlockPlaced = false;
+                } catch (e) { console.error('initGame state error:', e); }
+                try { console.log('initGame: generateNewBlocks'); this.generateNewBlocks(); } catch (e) { console.error('initGame generateNewBlocks error:', e); }
+                try { console.log('initGame: renderBlockPreviews'); this.renderBlockPreviews(); } catch (e) { console.error('initGame renderBlockPreviews error:', e); }
+                try { console.log('initGame: updateUI'); this.updateUI(); } catch (e) { console.error('initGame updateUI error:', e); }
+                try { console.log('initGame: hideLoading'); this.hideLoading(); } catch (e) { console.error('initGame hideLoading error:', e); }
+                try {
+                    const goEl = document.getElementById('goScoreValue');
+                    if (goEl) goEl.textContent = this.score.toLocaleString('en-US');
+                } catch (e) { console.error('initGame goScore error:', e); }
+                console.log('initGame: end');
             }
 
             setupEvents() {
@@ -1547,7 +1589,8 @@
                 if (!CONFIG.IMAGE_HAND_TUTORIAL) return;
                 if (!this.fxContainer) return;
                 this.clearTutorialHandEffect();
-                const tex = PIXI.Texture.from(CONFIG.IMAGE_HAND_TUTORIAL);
+                const tex = CONFIG._HAND_TEXTURE || null;
+                if (!tex) return;
                 const hand = new PIXI.Sprite(tex);
                 hand.anchor.set(0.2, 0.2);
                 const size = CONFIG.CELL_SIZE * 1.5;
@@ -1643,7 +1686,7 @@
                         const tut = CONFIG.TUTORIAL;
                         const forcedIdx = (tut && tut.enabled && Array.isArray(tut.dragIndexPerTurn)) ? tut.dragIndexPerTurn[this.activeTutorialTurnIndex] : null;
                         const allowDrag = !!block && (!tut?.enabled || this.tutorialSelectedBlockPlaced || forcedIdx == null || forcedIdx === blockIndex);
-                        blockGroup.eventMode = allowDrag ? 'static' : 'none';
+                        blockGroup.interactive = allowDrag;
                         blockGroup.buttonMode = allowDrag;
                         blockGroup.removeAllListeners();
                         if (allowDrag) {
@@ -1669,7 +1712,7 @@
                     const tut = CONFIG.TUTORIAL;
                     const forcedIdx = (tut && tut.enabled && Array.isArray(tut.dragIndexPerTurn)) ? tut.dragIndexPerTurn[this.activeTutorialTurnIndex] : null;
                     const allowDrag = !!block && (!tut?.enabled || this.tutorialSelectedBlockPlaced || forcedIdx == null || forcedIdx === blockIndex);
-                    blockGroup.eventMode = allowDrag ? 'static' : 'none';
+                    blockGroup.interactive = allowDrag;
                     blockGroup.buttonMode = allowDrag;
                     blockGroup.removeAllListeners();
 
@@ -2565,7 +2608,7 @@
             const tileH = Math.round(meta.h * scale);
             document.body.style.setProperty('--bg-tile-height', tileH + 'px');
         }
-        window.addEventListener('load', () => {
+        window.addEventListener('DOMContentLoaded', () => {
               new PuzzleBlockGame();
 
             window.addEventListener('resize', updateBgTileHeight);
@@ -2575,3 +2618,4 @@
 </body>
 
 </html>
+           
