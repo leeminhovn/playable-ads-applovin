@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Odibee+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -350,7 +351,7 @@
             PROGRESS_TEXT_COLOR: 0xFFD700,
             PROGRESS_BORDER_WIDTH: 4,
             PROGRESS_TO_BOARD_GAP: 12,
-            CANVAS_BOTTOM_EXTRA: 40,
+            CANVAS_BOTTOM_EXTRA: 70,
             BOARD_PADDING: 8,
             BOARD_BORDER1_WIDTH: 7,
             BOARD_BORDER1_COLOR: 0x3d2817,
@@ -828,6 +829,12 @@
                     CONFIG.PROGRESS_HEIGHT + CONFIG.PROGRESS_TO_BOARD_GAP + CONFIG.BOARD_OFFSET_Y + CONFIG.CELL_SIZE * CONFIG.BOARD_ROWS + CONFIG.BLOCK_LIST_TOP_MARGIN
                 );
             this.app.stage.addChild(this.blocksContainer);
+
+                const dragHintStyle = new PIXI.TextStyle({ fill: 0xFFFFFF, fontSize: 30, fontFamily: "Nunito", fontWeight: '900' });
+                const dragHint = new PIXI.Text('DRAG TO MATCH', dragHintStyle);
+                dragHint.anchor.set(0.5);
+                dragHint.position.set(boardX + boardWidth / 2, this.blocksContainer.y + slotWidth + 50);
+                this.app.stage.addChild(dragHint);
 
                 this.createProgressBar();
 
