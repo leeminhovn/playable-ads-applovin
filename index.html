@@ -1324,8 +1324,8 @@
                 this.score = 0;
                 this.level = 1;
                 this.prevLevel = 1;
-                this.prevScore = 0;
-                this.lastMilestoneShown = null;
+                this.prevScore = this.score;
+                this.lastMilestoneShown = (CONFIG.LEVEL_MILESTONES && CONFIG.LEVEL_MILESTONES.length) ? CONFIG.LEVEL_MILESTONES[0] : 0;
                 this.currentBlocks = [];
                 this.draggedBlock = null;
                 // Track các ô board đã highlight để restore mỗi frame
@@ -2244,12 +2244,14 @@
                 const nextMilestone = CONFIG.LEVEL_MILESTONES[this.level] || currentMilestone + 500;
                 this.updateProgressBar(currentMilestone, nextMilestone);
                 const last = this.prevScore || 0;
-                for (let i = 0; i < CONFIG.LEVEL_MILESTONES.length; i++) {
-                    const m = CONFIG.LEVEL_MILESTONES[i];
-                    if (last < m && this.score >= m && this.lastMilestoneShown !== m) {
-                        this.showMilestonePopup(m);
-                        this.lastMilestoneShown = m;
-                        break;
+                if (this.score > last) {
+                    for (let i = 0; i < CONFIG.LEVEL_MILESTONES.length; i++) {
+                        const m = CONFIG.LEVEL_MILESTONES[i];
+                        if (m > 0 && last < m && this.score >= m && this.lastMilestoneShown !== m) {
+                            this.showMilestonePopup(m);
+                            this.lastMilestoneShown = m;
+                            break;
+                        }
                     }
                 }
                 this.prevScore = this.score;
