@@ -458,7 +458,9 @@
                         { shape: 4, type: [0,2,2,2] },
                         { shape: 5, type: [2,2,3,1,3,3,1,1,0] }
                     ]
-                ]
+                ],
+                dragIndexPerTurn: [0, 0],
+                targets: [ { row: 1, col: 1 }, { row: 1, col: 0 } ]
             }
         };
 
@@ -1116,6 +1118,8 @@
                 // Track các ô board đã highlight để restore mỗi frame
                 this.prevHighlightedBoardCells = new Set();
                 this.tutorialTurnIndex = 0;
+                this.activeTutorialTurnIndex = -1;
+                this.tutorialSelectedBlockPlaced = false;
                 
                 this.generateNewBlocks();
                 this.renderBlockPreviews();
@@ -1129,12 +1133,54 @@
                 this.app.stage.on('pointerupoutside', (e) => this.onPointerUp(e));
             }
 
+            renderTutorialTargetHighlight() {
+                const tut = CONFIG.TUTORIAL;
+                if (!tut || !tut.enabled) return;
+                const idx = this.activeTutorialTurnIndex;
+                const forcedIdx = Array.isArray(tut.dragIndexPerTurn) ? tut.dragIndexPerTurn[idx] : null;
+                const target = Array.isArray(tut.targets) ? tut.targets[idx] : null;
+                if (this.tutorialSelectedBlockPlaced) { this.clearTutorialTargetHighlight(); return; }
+                if (forcedIdx == null || !target) return;
+                const block = this.currentBlocks[forcedIdx];
+                if (!block || !block.cells) return;
+                this.clearTutorialTargetHighlight();
+                const layer = new PIXI.Container();
+                layer.zIndex = 45;
+                const { CELL_SIZE } = CONFIG;
+                block.cells.forEach(({ x, y }) => {
+                    const r = target.row + y;
+                    const c = target.col + x;
+                    if (r < 0 || c < 0 || r >= CONFIG.BOARD_ROWS || c >= CONFIG.BOARD_COLS) return;
+                    const g = new PIXI.Graphics();
+                    const inset = CONFIG.CELL_BORDER_WIDTH;
+                    const size = CELL_SIZE - inset * 2;
+                    const radius = Math.max(CONFIG.CELL_BORDER_RADIUS - inset, 0);
+                    g.lineStyle({ width: 2, color: 0x00FF00, alignment: 1 });
+                    g.beginFill(0x00FF00, 0.25);
+                    g.drawRoundedRect(inset, inset, size, size, radius);
+                    g.endFill();
+                    g.position.set(c * CELL_SIZE, r * CELL_SIZE);
+                    layer.addChild(g);
+                });
+                this.boardContainer.addChild(layer);
+                this.tutorialTargetLayer = layer;
+                if (this.boardContainer.sortableChildren) this.boardContainer.sortChildren();
+            }
+
+            clearTutorialTargetHighlight() {
+                if (this.tutorialTargetLayer && this.tutorialTargetLayer.parent) {
+                    this.tutorialTargetLayer.parent.removeChild(this.tutorialTargetLayer);
+                }
+                this.tutorialTargetLayer = null;
+            }
+
             generateNewBlocks() {
                 const { BLOCK_SHAPES, TUTORIAL } = CONFIG;
                 this.currentBlocks = [];
                 const useScript = TUTORIAL && TUTORIAL.enabled && Array.isArray(TUTORIAL.blockTurns) && this.tutorialTurnIndex < TUTORIAL.blockTurns.length;
                 if (useScript) {
-                    const turn = TUTORIAL.blockTurns[this.tutorialTurnIndex] || [];
+                    const turnIdx = this.tutorialTurnIndex;
+                    const turn = TUTORIAL.blockTurns[turnIdx] || [];
                     for (let i = 0; i < 3; i++) {
                         const spec = turn[i];
                         if (spec && typeof spec.shape === 'number') {
@@ -1148,6 +1194,8 @@
                             this.currentBlocks.push(GameBlock.generateWithRandomTypes(shapeIdx));
                         }
                     }
+                    this.activeTutorialTurnIndex = turnIdx;
+                    this.tutorialSelectedBlockPlaced = false;
                     this.tutorialTurnIndex++;
                 } else {
                     for (let i = 0; i < 3; i++) {
@@ -1166,14 +1214,18 @@
                 if (this.blocksContainer.children.length === 0) {
                     this.currentBlocks.forEach((block, blockIndex) => {
                         const blockGroup = this.createBlockPreview(block, blockIndex);
-                        blockGroup.interactive = !!block;
-                        blockGroup.buttonMode = !!block;
+                        const tut = CONFIG.TUTORIAL;
+                        const forcedIdx = (tut && tut.enabled && Array.isArray(tut.dragIndexPerTurn)) ? tut.dragIndexPerTurn[this.activeTutorialTurnIndex] : null;
+                        const allowDrag = !!block && (!tut?.enabled || this.tutorialSelectedBlockPlaced || forcedIdx === blockIndex);
+                        blockGroup.interactive = allowDrag;
+                        blockGroup.buttonMode = allowDrag;
                         blockGroup.removeAllListeners();
-                        if (block) {
+                        if (allowDrag) {
                             blockGroup.on('pointerdown', (e) => this.startDragBlock(e, block, blockIndex));
                         }
                         this.blocksContainer.addChild(blockGroup);
                     });
+                    this.renderTutorialTargetHighlight();
                     return;
                 }
                         // Cập nhật nội dung của các wrapper đã tồn tại
@@ -1188,8 +1240,11 @@
                         blockGroup.cellGroup = null;
                     }
 
-                    blockGroup.interactive = !!block;
-                    blockGroup.buttonMode = !!block;
+                    const tut = CONFIG.TUTORIAL;
+                    const forcedIdx = (tut && tut.enabled && Array.isArray(tut.dragIndexPerTurn)) ? tut.dragIndexPerTurn[this.activeTutorialTurnIndex] : null;
+                    const allowDrag = !!block && (!tut?.enabled || this.tutorialSelectedBlockPlaced || forcedIdx === blockIndex);
+                    blockGroup.interactive = allowDrag;
+                    blockGroup.buttonMode = allowDrag;
                     blockGroup.removeAllListeners();
 
                     if (!block) {
@@ -1220,9 +1275,11 @@
                     blockGroup.cellGroup = cellGroup;
                     blockGroup.addChild(cellGroup);
 
-                    blockGroup.on('pointerdown', (e) => this.startDragBlock(e, block, blockIndex));
+                    if (allowDrag) {
+                        blockGroup.on('pointerdown', (e) => this.startDragBlock(e, block, blockIndex));
+                    }
                 });
-    
+                this.renderTutorialTargetHighlight();
             }
 
             createBlockPreview(block, index) {
@@ -1610,6 +1667,14 @@
                     this.checkMatches();
                     this.renderBlockPreviews();
                     this.updateUI();
+                    if (CONFIG.TUTORIAL && CONFIG.TUTORIAL.enabled) {
+                        const forcedIdx = Array.isArray(CONFIG.TUTORIAL.dragIndexPerTurn) ? CONFIG.TUTORIAL.dragIndexPerTurn[this.activeTutorialTurnIndex] : null;
+                        if (forcedIdx === blockIndex) {
+                            this.tutorialSelectedBlockPlaced = true;
+                            this.clearTutorialTargetHighlight();
+                            this.renderBlockPreviews();
+                        }
+                    }
                 return true;
             }
 
