@@ -331,9 +331,9 @@
             BOARD_COLS: 8,
             BOARD_ROWS: 8,
             CELL_SIZE: 60,
-            CELL_PADDING: 5,
+            CELL_PADDING: 4,
             CELL_BORDER_WIDTH: 3,
-            CELL_BORDER_RADIUS: 5,
+            CELL_BORDER_RADIUS: 7,
             BOARD_OFFSET_X: 10,
             BOARD_OFFSET_Y: 60,
             BLOCK_LIST_TOP_MARGIN: 20,
@@ -480,13 +480,17 @@
                 let { CELL_SIZE, CELL_PADDING, CELL_BORDER_WIDTH, CELL_BORDER_RADIUS } = CONFIG;
 
                 const newGraphic = new PIXI.Graphics();
-                const innerSize = CELL_SIZE - CELL_PADDING * 2;
-                const innerX = CELL_PADDING;
-                const innerY = CELL_PADDING;
+                const inset = CELL_BORDER_WIDTH;
+                const outerSize = CELL_SIZE - inset * 2;
+                const outerX = inset;
+                const outerY = inset;
+                const outerR = Math.max(CELL_BORDER_RADIUS - inset, 0);
+                const innerSize = outerSize - CELL_PADDING * 2;
+                const innerX = outerX + CELL_PADDING;
+                const innerY = outerY + CELL_PADDING;
 
                 if (this.type === -1) {
-                    newGraphic.lineStyle(CELL_BORDER_WIDTH, parseInt(CONFIG.EMPTY_CELL_BORDER.slice(1), 16));
-                    newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
+                    
                 } else {
 
                     const info = CONFIG.CELL_INFO_COLORS[this.type];
@@ -499,17 +503,17 @@
                         gradientTexture = this.createGradientTexture(CELL_SIZE, CELL_SIZE, '#000000', '#000000');
                     }
                     newGraphic.beginTextureFill({ texture: gradientTexture });
-                    newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
+                    newGraphic.drawRoundedRect(outerX, outerY, outerSize, outerSize, outerR);
                     newGraphic.endFill();
 
                     const innerColor = info ? (info.innerBackground & 0xFFFFFF) : parseInt(CONFIG.CELL_COLORS[this.type].slice(1), 16);
                     newGraphic.beginFill(innerColor);
-                    newGraphic.drawRoundedRect(innerX, innerY, innerSize, innerSize, CELL_BORDER_RADIUS);
+                    newGraphic.drawRoundedRect(innerX, innerY, innerSize, innerSize, outerR);
                     newGraphic.endFill();
 
                     // Vẽ border lên trên cùng
-                    newGraphic.lineStyle(CELL_BORDER_WIDTH, parseInt(CONFIG.CELL_BORDER_COLOR.slice(1), 16));
-                    newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CELL_BORDER_RADIUS);
+                    newGraphic.lineStyle({ width: CELL_BORDER_WIDTH, color: parseInt(CONFIG.CELL_BORDER_COLOR.slice(1), 16), alignment: 1 });
+                    newGraphic.drawRoundedRect(outerX, outerY, outerSize, outerSize, outerR);
 
                     // Thêm icon
                 const icon = this.createIcon(this.type);
@@ -806,6 +810,7 @@
                     CONFIG.BOARD_OFFSET_X,
                     CONFIG.PROGRESS_HEIGHT + CONFIG.PROGRESS_TO_BOARD_GAP + CONFIG.BOARD_OFFSET_Y
                 );
+                this.boardContainer.sortableChildren = true;
                 this.app.stage.addChild(this.boardContainer);
 
                 this.blocksContainer = new PIXI.Container();
@@ -963,12 +968,10 @@
                 this.app.stage.addChildAt(fill, 0);
 
                 const frame1 = new PIXI.Graphics();
-                frame1.lineStyle({ width: CONFIG.BOARD_BORDER1_WIDTH, color: CONFIG.BOARD_BORDER1_COLOR, alignment: 0 });
-                frame1.drawRoundedRect(x, y, w, h, r);
                 this.app.stage.addChildAt(frame1, 1);
 
                 const frame2 = new PIXI.Graphics();
-                frame2.lineStyle({ width: CONFIG.BOARD_BORDER2_WIDTH, color: CONFIG.BOARD_BORDER2_COLOR, alignment: 0 });
+                frame2.lineStyle({ width: CONFIG.BOARD_BORDER2_WIDTH, color: CONFIG.BOARD_BORDER2_COLOR, alignment: 1 });
                 frame2.drawRoundedRect(x, y, w, h, r);
                 this.app.stage.addChildAt(frame2, 2);
             }
@@ -999,7 +1002,8 @@
                     for (let c = 0; c < BOARD_COLS; c++) {
                         const colorHex = (r + c) % 2 === 0 ? parseInt(CONFIG.EMPTY_CELL_BG.slice(1), 16) : parseInt(CONFIG.EMPTY_CELL_BG_2.slice(1), 16);
                         g.beginFill(colorHex);
-                        g.drawRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        g.lineStyle(CONFIG.CELL_BORDER_WIDTH, CONFIG.CELL_BORDER_COLOR);
+                        g.drawRoundedRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE, CONFIG.CELL_BORDER_RADIUS);
                         g.endFill();
                     }
                 }
@@ -1213,7 +1217,9 @@
                 // Tạo/clear layer highlight nằm trên board
                 if (!this.boardHighlightLayer) {
                     this.boardHighlightLayer = new PIXI.Container();
+                    this.boardHighlightLayer.zIndex = 50;
                     this.boardContainer.addChild(this.boardHighlightLayer);
+                    if (this.boardContainer.sortableChildren) this.boardContainer.sortChildren();
                 } else {
                     this.boardHighlightLayer.removeChildren();
                 }
@@ -1252,21 +1258,24 @@
                     placingCells.push({ r, c, type, dx: dc.dx, dy: dc.dy });
                 });
 
-                // Overlay: highlight chỗ trống hợp lệ/không hợp lệ để báo trạng thái đặt
+                // Overlay: highlight trạng thái đặt
                 placingCells.forEach(({ r, c }) => {
                     if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS) return;
 
-                    const isEmpty = this.board[r][c].type === -1;
                     const highlight = new PIXI.Graphics();
-                    const alpha = 0.6;
-                    const borderColor = isEmpty ? 0x00FF00 : 0xFF0000;
-                    highlight.lineStyle({ width: 2, color: borderColor, alignment: 1 });
-                    highlight.beginFill(isEmpty ? 0x00FF00 : 0xFF0000, alpha);
-                    highlight.drawRect(0, 0, CELL_SIZE, CELL_SIZE);
+                    const isPlaceable = canPlace;
+                    const color = isPlaceable ? 0x00FF00 : 0xFF0000;
+                    const alpha = isPlaceable ? 0.8 : 0.3;
+                    highlight.lineStyle({ width: 2, color, alignment: 1 });
+                    highlight.beginFill(color, alpha);
+                    const inset = CONFIG.CELL_BORDER_WIDTH;
+                    const size = CELL_SIZE - inset * 2;
+                    const radius = Math.max(CONFIG.CELL_BORDER_RADIUS - inset, 0);
+                    highlight.drawRoundedRect(inset, inset, size, size, radius);
                     highlight.endFill();
 
-                    // Đặt highlight theo toạ độ local của boardContainer
                     highlight.position.set(c * CELL_SIZE, r * CELL_SIZE);
+                    highlight.zIndex = 50;
                     this.boardHighlightLayer.addChild(highlight);
                 });
 
