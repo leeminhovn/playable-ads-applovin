@@ -1669,29 +1669,79 @@
                 }
 
                 if (groups.length > 0) {
-                    const allCells = [];
-                    groups.forEach(group => {
-                        group.forEach(([r, c]) => {
-                            this.spawnCellCloneToProgress(r, c, 300);
-                            this.board[r][c].setType(-1);
-                            this.updateCellGraphic(r, c);
-                            this.spawnFloatText(r, c, '+1', 0x00FF00);
-                            this.score++;
-                            allCells.push([r, c]);
-                        });
-                    });
+                    this.animateEat(groups);
+                }
+            }
 
-                    const total = allCells.length;
-                    const comboType = ComboData.getComboTypeFromCountGetCell(total);
+            animateEat(groups) {
+                const allCells = [];
+                groups.forEach(group => {
+                    group.forEach(([r, c]) => allCells.push([r, c]));
+                });
+                const total = allCells.length;
+                const comboType = ComboData.getComboTypeFromCountGetCell(total);
+                const comboColors = comboType ? ComboData.comboColorForLightCells(comboType) : null;
+                const interval = 50;
+
+                allCells.forEach(([r, c], i) => {
+                    setTimeout(() => {
+                        const originalCell = this.board[r][c];
+                        if (!originalCell || originalCell.type === -1) return;
+                        const newGraphic = originalCell.renderHighlightGreen(comboColors, 0xFFFFFF);
+                        newGraphic.pivot.set(CONFIG.CELL_SIZE / 2, CONFIG.CELL_SIZE / 2);
+                        newGraphic.position.set(c * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2, r * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2);
+                        newGraphic.zIndex = 20;
+                        const spriteData = this.cellSprites.find(s => s.row === r && s.col === c);
+                        if (spriteData && spriteData.graphic.parent) {
+                            const index = spriteData.graphic.parent.children.indexOf(spriteData.graphic);
+                            this.boardContainer.removeChild(spriteData.graphic);
+                            this.boardContainer.addChildAt(newGraphic, index);
+                            spriteData.graphic = newGraphic;
+                            originalCell.graphic = newGraphic;
+                        }
+                        let elapsed = 0;
+                        const growMs = 120;
+                        const holdMs = 80;
+                        const shrinkMs = 120;
+                        newGraphic.scale.set(0.8);
+                        const update = () => {
+                            elapsed += this.app.ticker.deltaMS;
+                            if (elapsed <= growMs) {
+                                const t = elapsed / growMs;
+                                newGraphic.scale.set(0.8 + 0.35 * t);
+                            } else if (elapsed <= growMs + holdMs) {
+                                newGraphic.scale.set(1.15);
+                            } else {
+                                const t2 = Math.min((elapsed - growMs - holdMs) / shrinkMs, 1);
+                                newGraphic.scale.set(1.15 - 0.15 * t2);
+                                if (t2 >= 1) {
+                                    this.app.ticker.remove(update);
+                                    newGraphic.scale.set(1);
+                                }
+                            }
+                        };
+                        this.app.ticker.add(update);
+                    }, i * interval);
+                });
+
+                setTimeout(() => {
+                    const collected = [];
+                    allCells.forEach(([r, c]) => {
+                        this.spawnCellCloneToProgress(r, c, 300);
+                        this.board[r][c].setType(-1);
+                        this.updateCellGraphic(r, c);
+                        this.spawnFloatText(r, c, '+1', 0x00FF00);
+                        this.score++;
+                        collected.push([r, c]);
+                    });
                     if (comboType) {
                         const detail = ComboData.getComboDetailFromComboFirst(comboType);
-                        this.spawnComboEffect(allCells, detail);
+                        this.spawnComboEffect(collected, detail);
                         this.score += detail.pointsBase;
                     }
-
                     this.updateUI();
                     setTimeout(() => this.checkMatches(), 200);
-                }
+                }, allCells.length * interval + 50);
             }
 
             getConnectedGroup(startR, startC) {
