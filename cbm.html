@@ -2027,10 +2027,18 @@ void main(void)\r
                    sprite.height = iconSize;
                 };
                 if (sprite.texture && sprite.texture.baseTexture) {
-                    if (sprite.texture.baseTexture.valid) applySize();
-                    else sprite.texture.baseTexture.once('loaded', applySize);
+                    if (sprite.texture.baseTexture.valid) {
+                        applySize();
+                        if (this.graphic) this.graphic.cacheAsBitmap = true;
+                    } else {
+                        sprite.texture.baseTexture.once('loaded', () => {
+                            applySize();
+                            if (this.graphic) this.graphic.cacheAsBitmap = true;
+                        });
+                    }
                 } else {
                     applySize();
+                    if (this.graphic) this.graphic.cacheAsBitmap = true;
                 }
                 return sprite;
             }
@@ -2041,6 +2049,9 @@ void main(void)\r
             }
             
             createGradientTexture(width, height, fromColor, toColor, direction = 'vertical') {
+                const cache = (window.__texCache = window.__texCache || {});
+                const key = `grad:${width}x${height}:${direction}:${fromColor}:${toColor}`;
+                if (cache[key]) return cache[key];
                 // 1. Tạo canvas tạm
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
@@ -2071,15 +2082,16 @@ void main(void)\r
                 ctx.fillRect(0, 0, width, height);
 
                 // 5. Tạo base texture và cho phép reuse
-                const baseTexture = PIXI.BaseTexture.from(canvas, {
-                    scaleMode: PIXI.SCALE_MODES.LINEAR, // mượt hơn
-                });
-                
-                // 6. Trả về texture
-                return new PIXI.Texture(baseTexture);
+                const texture = PIXI.Texture.from(canvas);
+                if (texture && texture.baseTexture) texture.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
+                cache[key] = texture;
+                return texture;
             }
 
             createGradientTextureStops(width, height, colors, direction = 'vertical') {
+                const cache = (window.__texCache = window.__texCache || {});
+                const key = `stops:${width}x${height}:${direction}:${(colors||[]).join(',')}`;
+                if (cache[key]) return cache[key];
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
@@ -2115,13 +2127,16 @@ void main(void)\r
                 }
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, width, height);
-                const baseTexture = PIXI.BaseTexture.from(canvas, {
-                    scaleMode: PIXI.SCALE_MODES.LINEAR,
-                });
-                return new PIXI.Texture(baseTexture);
+                const texture = PIXI.Texture.from(canvas);
+                if (texture && texture.baseTexture) texture.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
+                cache[key] = texture;
+                return texture;
             }
 
             createEvenGradientTextureStops(width, height, colors, direction = 'vertical', blend = 0.08) {
+                const cache = (window.__texCache = window.__texCache || {});
+                const key = `even:${width}x${height}:${direction}:${(colors||[]).join(',')}:${blend}`;
+                if (cache[key]) return cache[key];
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
@@ -2160,13 +2175,16 @@ void main(void)\r
                 }
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, width, height);
-                const baseTexture = PIXI.BaseTexture.from(canvas, {
-                    scaleMode: PIXI.SCALE_MODES.LINEAR,
-                });
-                return new PIXI.Texture(baseTexture);
+                const texture = PIXI.Texture.from(canvas);
+                if (texture && texture.baseTexture) texture.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
+                cache[key] = texture;
+                return texture;
             }
 
             createLinearGradientTextureStops(width, height, colors, direction = 'vertical') {
+                const cache = (window.__texCache = window.__texCache || {});
+                const key = `linear:${width}x${height}:${direction}:${(colors||[]).join(',')}`;
+                if (cache[key]) return cache[key];
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
@@ -2200,10 +2218,10 @@ void main(void)\r
                 }
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, width, height);
-                const baseTexture = PIXI.BaseTexture.from(canvas, {
-                    scaleMode: PIXI.SCALE_MODES.LINEAR,
-                });
-                return new PIXI.Texture(baseTexture);
+                const texture = PIXI.Texture.from(canvas);
+                if (texture && texture.baseTexture) texture.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
+                cache[key] = texture;
+                return texture;
             }
 
             setType(type) {
@@ -2322,10 +2340,9 @@ void main(void)\r
         class PuzzleBlockGame {
             constructor() {
                 this.initPixi();
-                this.initBoard();
              
             }
-            start = () => { this.initGame(); this.setupEvents(); };
+            start = () => { this.initBoard(); this.initGame(); this.setupEvents(); };
 
             initPixi() {
                 const { BOARD_COLS, BOARD_ROWS, CELL_SIZE } = CONFIG;
@@ -2361,7 +2378,8 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     CONFIG.BOARD_OFFSET_X,
                     CONFIG.PROGRESS_HEIGHT + CONFIG.PROGRESS_TO_BOARD_GAP + CONFIG.BOARD_OFFSET_Y
                 );
-                this.boardContainer.sortableChildren = true;
+                this.boardContainer.sortableChildren = false;
+                this.boardContainer.interactiveChildren = false;
                 this.app.stage.addChild(this.boardContainer);
 
                 this.blocksContainer = new PIXI.Container();
@@ -2546,6 +2564,7 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                         const cell = new GameCell();
                         cell.graphic = cell.render(c, r);
                         cell.graphic.position.set(c * CONFIG.CELL_SIZE, r * CONFIG.CELL_SIZE);
+                        cell.graphic.cacheAsBitmap = false;
                         this.boardContainer.addChild(cell.graphic);
                         this.board[r][c] = cell;
                         this.cellSprites.push({ cell, graphic: cell.graphic, row: r, col: c });
@@ -2574,12 +2593,15 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     for (let c = 0; c < BOARD_COLS; c++) {
                         const colorHex = (r + c) % 2 === 0 ? parseInt(CONFIG.EMPTY_CELL_BG.slice(1), 16) : parseInt(CONFIG.EMPTY_CELL_BG_2.slice(1), 16);
                         g.beginFill(colorHex);
-                        g.lineStyle(CONFIG.CELL_BORDER_WIDTH, CONFIG.CELL_BORDER_COLOR);
+                        g.lineStyle(CONFIG.CELL_BORDER_WIDTH, parseInt(CONFIG.CELL_BORDER_COLOR.slice(1), 16));
                         g.drawRoundedRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE, CONFIG.CELL_BORDER_RADIUS);
                         g.endFill();
                     }
                 }
-                this.boardContainer.addChildAt(g, 0);
+                const tex = this.app.renderer.generateTexture(g);
+                const spr = new PIXI.Sprite(tex);
+                this.boardContainer.addChildAt(spr, 0);
+                g.destroy(true);
             }
 
             initGame() {
@@ -3282,6 +3304,7 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                 const cell = this.board[row][col];
                 const newGraphic = cell.render();
                 newGraphic.position.set(col * CONFIG.CELL_SIZE, row * CONFIG.CELL_SIZE);
+                newGraphic.cacheAsBitmap = false;
 
                 const spriteData = this.cellSprites.find(s => s.row === row && s.col === col);
                 if (spriteData && spriteData.graphic.parent) {
@@ -3291,6 +3314,15 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     spriteData.graphic = newGraphic;
                     cell.graphic = newGraphic;
                 }
+                this.scheduleRender();
+            }
+
+            scheduleRender() {
+                try {
+                    if (this.app && this.app.renderer && this.app.stage) {
+                        this.app.renderer.render(this.app.stage);
+                    }
+                } catch (_) {}
             }
 
             spawnFloatText(row, col, text = '+1', color = 0x00FF00) {
