@@ -2323,15 +2323,9 @@ void main(void)\r
             constructor() {
                 this.initPixi();
                 this.initBoard();
-                const start = () => { this.initGame(); this.setupEvents(); };
-                preloadAssets().then(() => {
-                    if (typeof requestAnimationFrame === 'function') {
-                        requestAnimationFrame(() => setTimeout(start, 0));
-                    } else {
-                        setTimeout(start, 0);
-                    }
-                });
+             
             }
+            start = () => { this.initGame(); this.setupEvents(); };
 
             initPixi() {
                 const { BOARD_COLS, BOARD_ROWS, CELL_SIZE } = CONFIG;
@@ -2344,8 +2338,11 @@ void main(void)\r
                     width: canvasWidth,
                     backgroundAlpha: 0,
                     height: canvasHeight,
-                    antialias: true,
-                    resolution: window.devicePixelRatio || 1,
+                    // resolution: window.devicePixelRatio || 1,
+                    antialias: false,
+                    resolution: 1,
+                    powerPreference: 'high-performance',
+                    autoDensity: false,
                 });
 
                 const container = document.getElementById('gameCanvas');
@@ -3716,8 +3713,15 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
             document.body.style.setProperty('--bg-tile-height', tileH + 'px');
         }
         window.addEventListener('DOMContentLoaded', () => {
-              new PuzzleBlockGame();
+            const game =  new PuzzleBlockGame();
+            preloadAssets().then(() => {
+                    if (typeof requestAnimationFrame === 'function') {
+                        game.start();
+                    } else {
+                        game.start();
 
+                    }
+                });
             window.addEventListener('resize', updateBgTileHeight);
          });
         
