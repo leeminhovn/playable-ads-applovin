@@ -6,10 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puzzle Block Game</title>
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.3/pixi.min.js"></script> -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Odibee+Sans&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+   
     <style>
         * {
             margin: 0;
@@ -2013,25 +2010,24 @@ void main(void)\r
                     text.anchor.set(0.5, 0.5);
                     return text;
                 }
-                const preScaled = CONFIG._ICON_TEXTURES_SCALED && CONFIG._ICON_TEXTURES_SCALED[type];
                 const pre = CONFIG._ICON_TEXTURES && CONFIG._ICON_TEXTURES[type];
                 const src = CONFIG.CELL_ICONS_BASE64 && CONFIG.CELL_ICONS_BASE64[type];
-                let texture = preScaled || pre || (src ? PIXI.Texture.from(src) : null);
+                let texture = pre || (src ? PIXI.Texture.from(src) : null);
                 if (!texture) {
                     return new PIXI.Graphics();
                 }
                 const sprite = new PIXI.Sprite(texture);
                 sprite.anchor.set(0.5, 0.5);
+                const applySize = () => {
+                   const iconSize = CONFIG.CELL_SIZE * 0.8;
+                   sprite.width = iconSize;
+                   sprite.height = iconSize;
+                };
                 if (sprite.texture && sprite.texture.baseTexture) {
-                    sprite.texture.baseTexture.mipmap = PIXI.MIPMAP_MODES.OFF;
-                    sprite.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
-                    if (sprite.texture.baseTexture.valid) {
-                        if (this.graphic) this.graphic.cacheAsBitmap = true;
-                    } else {
-                        sprite.texture.baseTexture.once('loaded', () => {
-                            if (this.graphic) this.graphic.cacheAsBitmap = true;
-                        });
-                    }
+                    if (sprite.texture.baseTexture.valid) applySize();
+                    else sprite.texture.baseTexture.once('loaded', applySize);
+                } else {
+                    applySize();
                 }
                 return sprite;
             }
@@ -2308,37 +2304,13 @@ void main(void)\r
         function preloadAssets() {
                 const promises = [];
                 CONFIG._ICON_TEXTURES = CONFIG._ICON_TEXTURES || [];
-                CONFIG._ICON_TEXTURES_SCALED = CONFIG._ICON_TEXTURES_SCALED || [];
                 const icons = Array.isArray(CONFIG.CELL_ICONS_BASE64) ? CONFIG.CELL_ICONS_BASE64 : [];
                 for (let i = 0; i < icons.length; i++) {
                     const src = icons[i];
                     if (!src) continue;
                     promises.push(new Promise((resolve) => {
                         const img = new Image();
-                        img.onload = () => {
-                            try {
-                                const baseTex = PIXI.Texture.from(img);
-                                if (baseTex && baseTex.baseTexture) {
-                                    baseTex.baseTexture.mipmap = PIXI.MIPMAP_MODES.OFF;
-                                    baseTex.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
-                                }
-                                CONFIG._ICON_TEXTURES[i] = baseTex;
-                                const iconSize = Math.floor((CONFIG.CELL_SIZE || 100) * 0.8);
-                                const canvas = document.createElement('canvas');
-                                canvas.width = iconSize;
-                                canvas.height = iconSize;
-                                const ctx = canvas.getContext('2d');
-                                ctx.clearRect(0, 0, iconSize, iconSize);
-                                ctx.drawImage(img, 0, 0, iconSize, iconSize);
-                                const scaledTex = PIXI.Texture.from(canvas);
-                                if (scaledTex && scaledTex.baseTexture) {
-                                    scaledTex.baseTexture.mipmap = PIXI.MIPMAP_MODES.OFF;
-                                    scaledTex.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
-                                }
-                                CONFIG._ICON_TEXTURES_SCALED[i] = scaledTex;
-                            } catch (_) {}
-                            resolve();
-                        };
+                        img.onload = () => { try { CONFIG._ICON_TEXTURES[i] = PIXI.Texture.from(img); } catch (_) {} resolve(); };
                         img.onerror = () => resolve();
                         img.src = src;
                     }));
@@ -2357,9 +2329,32 @@ void main(void)\r
         class PuzzleBlockGame {
             constructor() {
                 this.initPixi();
+                this.initBoard();
              
             }
-            start = () => { this.initBoard(); this.initGame(); this.setupEvents(); };
+            start = () => { this.initGame(); this.setupEvents(); this.initialDoubleFill(); };
+
+            initialDoubleFill() {
+                const rows = CONFIG.BOARD_ROWS;
+                const cols = CONFIG.BOARD_COLS;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const cell = this.board[r][c];
+                        if (!cell || cell.type === -1) continue;
+                        this.updateCellGraphic(r, c);
+                    }
+                }
+                const run2 = () => {
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            const cell = this.board[r][c];
+                            if (!cell || cell.type === -1) continue;
+                            this.updateCellGraphic(r, c);
+                        }
+                    }
+                };
+                if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run2); else setTimeout(run2, 0);
+            }
 
             initPixi() {
                 const { BOARD_COLS, BOARD_ROWS, CELL_SIZE } = CONFIG;
@@ -2581,7 +2576,7 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                         const cell = new GameCell();
                         cell.graphic = cell.render(c, r);
                         cell.graphic.position.set(c * CONFIG.CELL_SIZE, r * CONFIG.CELL_SIZE);
-                        cell.graphic.cacheAsBitmap = false;
+                        cell.graphic.cacheAsBitmap = true;
                         this.boardContainer.addChild(cell.graphic);
                         this.board[r][c] = cell;
                         this.cellSprites.push({ cell, graphic: cell.graphic, row: r, col: c });
@@ -3321,7 +3316,7 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                 const cell = this.board[row][col];
                 const newGraphic = cell.render();
                 newGraphic.position.set(col * CONFIG.CELL_SIZE, row * CONFIG.CELL_SIZE);
-                newGraphic.cacheAsBitmap = false;
+                newGraphic.cacheAsBitmap = true;
 
                 const spriteData = this.cellSprites.find(s => s.row === row && s.col === col);
                 if (spriteData && spriteData.graphic.parent) {
@@ -3331,15 +3326,6 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     spriteData.graphic = newGraphic;
                     cell.graphic = newGraphic;
                 }
-                this.scheduleRender();
-            }
-
-            scheduleRender() {
-                try {
-                    if (this.app && this.app.renderer && this.app.stage) {
-                        this.app.renderer.render(this.app.stage);
-                    }
-                } catch (_) {}
             }
 
             spawnFloatText(row, col, text = '+1', color = 0x00FF00) {
