@@ -2013,32 +2013,25 @@ void main(void)\r
                     text.anchor.set(0.5, 0.5);
                     return text;
                 }
+                const preScaled = CONFIG._ICON_TEXTURES_SCALED && CONFIG._ICON_TEXTURES_SCALED[type];
                 const pre = CONFIG._ICON_TEXTURES && CONFIG._ICON_TEXTURES[type];
                 const src = CONFIG.CELL_ICONS_BASE64 && CONFIG.CELL_ICONS_BASE64[type];
-                let texture = pre || (src ? PIXI.Texture.from(src) : null);
+                let texture = preScaled || pre || (src ? PIXI.Texture.from(src) : null);
                 if (!texture) {
                     return new PIXI.Graphics();
                 }
                 const sprite = new PIXI.Sprite(texture);
                 sprite.anchor.set(0.5, 0.5);
-                const applySize = () => {
-                   const iconSize = CONFIG.CELL_SIZE * 0.8;
-                   sprite.width = iconSize;
-                   sprite.height = iconSize;
-                };
                 if (sprite.texture && sprite.texture.baseTexture) {
+                    sprite.texture.baseTexture.mipmap = PIXI.MIPMAP_MODES.OFF;
+                    sprite.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
                     if (sprite.texture.baseTexture.valid) {
-                        applySize();
                         if (this.graphic) this.graphic.cacheAsBitmap = true;
                     } else {
                         sprite.texture.baseTexture.once('loaded', () => {
-                            applySize();
                             if (this.graphic) this.graphic.cacheAsBitmap = true;
                         });
                     }
-                } else {
-                    applySize();
-                    if (this.graphic) this.graphic.cacheAsBitmap = true;
                 }
                 return sprite;
             }
@@ -2315,13 +2308,37 @@ void main(void)\r
         function preloadAssets() {
                 const promises = [];
                 CONFIG._ICON_TEXTURES = CONFIG._ICON_TEXTURES || [];
+                CONFIG._ICON_TEXTURES_SCALED = CONFIG._ICON_TEXTURES_SCALED || [];
                 const icons = Array.isArray(CONFIG.CELL_ICONS_BASE64) ? CONFIG.CELL_ICONS_BASE64 : [];
                 for (let i = 0; i < icons.length; i++) {
                     const src = icons[i];
                     if (!src) continue;
                     promises.push(new Promise((resolve) => {
                         const img = new Image();
-                        img.onload = () => { try { CONFIG._ICON_TEXTURES[i] = PIXI.Texture.from(img); } catch (_) {} resolve(); };
+                        img.onload = () => {
+                            try {
+                                const baseTex = PIXI.Texture.from(img);
+                                if (baseTex && baseTex.baseTexture) {
+                                    baseTex.baseTexture.mipmap = PIXI.MIPMAP_MODES.OFF;
+                                    baseTex.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
+                                }
+                                CONFIG._ICON_TEXTURES[i] = baseTex;
+                                const iconSize = Math.floor((CONFIG.CELL_SIZE || 100) * 0.8);
+                                const canvas = document.createElement('canvas');
+                                canvas.width = iconSize;
+                                canvas.height = iconSize;
+                                const ctx = canvas.getContext('2d');
+                                ctx.clearRect(0, 0, iconSize, iconSize);
+                                ctx.drawImage(img, 0, 0, iconSize, iconSize);
+                                const scaledTex = PIXI.Texture.from(canvas);
+                                if (scaledTex && scaledTex.baseTexture) {
+                                    scaledTex.baseTexture.mipmap = PIXI.MIPMAP_MODES.OFF;
+                                    scaledTex.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
+                                }
+                                CONFIG._ICON_TEXTURES_SCALED[i] = scaledTex;
+                            } catch (_) {}
+                            resolve();
+                        };
                         img.onerror = () => resolve();
                         img.src = src;
                     }));
