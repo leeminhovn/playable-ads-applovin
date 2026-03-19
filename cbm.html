@@ -1869,6 +1869,91 @@ void main(void)\r
                 [[0, 0], [0, 1]],
                 [[0, 0], [1, 0], [2, 0], [3, 0]],
             ],
+            // Master Gem patterns: 10 gem types × 5 levels, each level is array of [dx, dy] offsets
+            MASTER_GEM_PATTERNS: [
+                // item1 - arrow up
+                [
+                    [[0,-1],[-1,1],[1,1]],
+                    [[0,-1],[0,-2],[-1,1],[1,1],[-2,2],[2,2]],
+                    [[0,-1],[0,-2],[0,-3],[-1,1],[1,1],[-2,2],[2,2],[-3,3],[3,3]],
+                    [[0,-1],[0,-2],[0,-3],[0,-4],[-1,1],[1,1],[-2,2],[2,2],[-3,3],[3,3],[-4,4],[4,4]],
+                    [[0,-1],[0,-2],[0,-3],[0,-4],[0,-5],[-1,1],[1,1],[-2,2],[2,2],[-3,3],[3,3],[-4,4],[4,4],[-5,5],[5,5]]
+                ],
+                // item2 - X diagonal
+                [
+                    [[-1,-1],[1,-1],[1,1],[-1,1]],
+                    [[-2,-2],[-1,-1],[1,-1],[1,1],[2,2],[-1,1]],
+                    [[-2,-2],[2,-2],[-1,-1],[1,-1],[1,1],[-1,1],[2,2],[-2,2]],
+                    [[3,-3],[-2,-2],[2,-2],[-1,-1],[1,-1],[1,1],[-1,1],[2,2],[-2,2],[-3,3]],
+                    [[-3,-3],[3,-3],[-2,-2],[2,-2],[-1,-1],[1,-1],[1,1],[-1,1],[2,2],[-2,2],[-3,3],[3,3]]
+                ],
+                // item3 - horizontal
+                [
+                    [[-1,0],[1,0]],
+                    [[-1,0],[1,0],[-2,0],[2,0],[-3,0],[3,0]],
+                    [[-1,0],[1,0],[-2,0],[2,0],[-3,0],[3,0],[-4,0],[4,0]],
+                    [[-1,0],[1,0],[-2,0],[2,0],[-3,0],[3,0],[-4,0],[4,0],[-5,0],[5,0]],
+                    [[-1,0],[1,0],[-2,0],[2,0],[-3,0],[3,0],[-4,0],[4,0],[-5,0],[5,0],[-6,0],[6,0]]
+                ],
+                // item4 - vertical
+                [
+                    [[0,-1],[0,1]],
+                    [[0,-1],[0,1],[0,-2],[0,2],[0,-3],[0,3]],
+                    [[0,-1],[0,1],[0,-2],[0,2],[0,-3],[0,3],[0,-4],[0,4]],
+                    [[0,-1],[0,1],[0,-2],[0,2],[0,-3],[0,3],[0,-4],[0,4],[0,-5],[0,5]],
+                    [[0,-1],[0,1],[0,-2],[0,2],[0,-3],[0,3],[0,-4],[0,4],[0,-5],[0,5],[0,-6],[0,6]]
+                ],
+                // item5 - cross/plus
+                [
+                    [[0,-1],[-1,0],[1,0],[0,1]],
+                    [[0,-2],[0,-1],[-1,0],[1,0],[0,1],[0,2]],
+                    [[0,-2],[0,-1],[-1,0],[-2,0],[2,0],[1,0],[0,1],[0,2]],
+                    [[0,-3],[0,-2],[0,-1],[-1,0],[-2,0],[2,0],[1,0],[0,1],[0,2],[0,3]],
+                    [[0,-3],[0,-2],[0,-1],[-1,0],[-2,0],[-3,0],[3,0],[2,0],[1,0],[0,1],[0,2],[0,3]]
+                ],
+                // item6 - sparse cross
+                [
+                    [[0,-2],[-2,0],[2,0],[0,2]],
+                    [[0,-4],[0,-2],[-2,0],[2,0],[0,2],[0,4]],
+                    [[0,-4],[0,-2],[-2,0],[-4,0],[4,0],[2,0],[0,2],[0,4]],
+                    [[0,-6],[0,-4],[0,-2],[-2,0],[-4,0],[4,0],[2,0],[0,2],[0,4],[0,6]],
+                    [[0,-6],[0,-4],[0,-2],[-2,0],[-4,0],[-6,0],[6,0],[4,0],[2,0],[0,2],[0,4],[0,6]]
+                ],
+                // item7 - block pattern
+                [
+                    [[-1,-1],[0,-1],[1,1],[0,1]],
+                    [[-1,-1],[0,-1],[1,-1],[1,1],[-1,1],[0,1]],
+                    [[-1,-1],[0,-1],[1,-1],[1,0],[-1,0],[1,1],[-1,1],[0,1]],
+                    [[-1,-1],[0,-1],[1,-1],[0,2],[0,-2],[1,0],[-1,0],[1,1],[-1,1],[0,1]],
+                    [[-1,-1],[0,-1],[1,-1],[0,2],[0,-2],[2,0],[-2,0],[1,0],[-1,0],[1,1],[-1,1],[0,1]]
+                ],
+                // item8 - corners
+                [
+                    [[-2,-2],[1,-2],[-1,2],[2,2]],
+                    [[-2,-2],[2,-2],[1,-2],[-1,2],[-2,2],[2,2]],
+                    [[-2,-2],[-2,-1],[2,-2],[1,-2],[-1,2],[-2,2],[2,1],[2,2]],
+                    [[-2,-2],[-2,-1],[2,-1],[2,-2],[1,-2],[-1,2],[-2,2],[-2,1],[2,1],[2,2]],
+                    [[-2,-2],[-2,-1],[2,-1],[2,-2],[1,-2],[-1,-2],[-1,2],[-2,2],[-2,1],[2,1],[2,2],[1,2]]
+                ],
+                // item9 - diamond rotate
+                [
+                    [[0,-2],[1,-1],[0,2],[-1,1]],
+                    [[0,-2],[1,-1],[0,2],[-1,1],[1,1],[-1,-1]],
+                    [[0,-2],[1,-1],[0,2],[2,0],[-2,0],[-1,1],[1,1],[-1,-1]],
+                    [[0,-2],[1,-1],[0,2],[2,0],[-2,0],[-1,-2],[-2,1],[1,2],[2,-1],[-1,1],[1,1],[-1,-1]],
+                    [[0,-2],[1,-1],[0,2],[2,0],[-2,0],[-1,-2],[-2,1],[1,-2],[2,1],[-1,2],[-2,-1],[1,2],[2,-1],[-1,1],[1,1],[-1,-1]]
+                ],
+                // item10 - wide corners
+                [
+                    [[-2,-2],[2,-2],[-2,2],[2,2]],
+                    [[-1,-3],[-2,-2],[2,-2],[3,-1],[-2,2],[-3,1],[1,3],[2,2]],
+                    [[-2,-2],[-1,-3],[-3,-1],[2,-2],[3,-1],[-2,2],[-3,1],[2,2],[1,3],[3,1]],
+                    [[-2,-2],[-1,-3],[-3,-1],[2,-2],[1,-3],[3,-1],[-2,2],[-3,1],[-1,3],[2,2],[1,3],[3,1]],
+                    [[-2,-2],[-1,-3],[-3,-1],[2,-2],[1,-3],[3,-1],[-2,2],[-3,1],[-1,3],[2,2],[1,3],[3,1],[-3,0],[3,0],[0,-3],[0,3]]
+                ]
+            ],
+            MASTER_GEM_DROP_RATE: 0.12,
+            MASTER_GEM_LEVEL: 0,
             TUTORIAL: {
                 enabled: true,
                 boardPreset: [
@@ -1903,6 +1988,7 @@ void main(void)\r
             constructor(type = -1) {
                 this.type = type;
                 this.graphic = null;
+                this.masterGem = null; // { gemType: 0-9, level: 0-4 } or null
             }
             renderHighlightGreen(comboColors) {
                 const { CELL_SIZE, CELL_PADDING, CELL_BORDER_WIDTH, CELL_BORDER_RADIUS } = CONFIG;
@@ -1949,6 +2035,11 @@ void main(void)\r
                 icon.position.set(CELL_SIZE / 2, CELL_SIZE / 2);
                 this.iconGraphic = icon;
                 newGraphic.addChild(icon);
+
+                // Master gem overlay (same as render)
+                if (this.masterGem) {
+                    this._addMasterGemOverlay(newGraphic);
+                }
 
                 this.graphic = newGraphic;
                 return newGraphic;
@@ -1998,12 +2089,78 @@ void main(void)\r
              
                 this.iconGraphic = icon;
                 newGraphic.addChild(icon);
+
+                // Master gem visual overlay
+                if (this.masterGem) {
+                    this._addMasterGemOverlay(newGraphic);
+                }
                 }
 
                 this.graphic = newGraphic;
                 return newGraphic;
             }
 
+            _addMasterGemOverlay(newGraphic) {
+                const { CELL_SIZE, CELL_BORDER_RADIUS } = CONFIG;
+                // Rainbow border
+                const rainbowColors = ['#ff4444', '#ff8800', '#ffdd00', '#44ff44', '#4488ff', '#aa44ff'];
+                const rainbowTex = this.createLinearGradientTextureStops(CELL_SIZE, CELL_SIZE, rainbowColors, 'diagonal');
+                const glowG = new PIXI.Graphics();
+                glowG.lineTextureStyle({ width: 3, texture: rainbowTex });
+                glowG.drawRoundedRect(2, 2, CELL_SIZE - 4, CELL_SIZE - 4, CELL_BORDER_RADIUS);
+                newGraphic.addChild(glowG);
+
+                // Animated sparkle stars (3-4 small stars, random positions, fade in/out)
+                const starCount = 3 + Math.floor(Math.random() * 2); // 3 or 4
+                const margin = 8;
+                for (let i = 0; i < starCount; i++) {
+                    const star = new PIXI.Graphics();
+                    const sz = 3 + Math.random() * 2; // size 3~5
+                    star.beginFill(0xFFD700);
+                    star.lineStyle(0.5, 0xFFFFFF, 0.9);
+                    star.moveTo(0, -sz);
+                    star.lineTo(sz * 0.35, -sz * 0.35);
+                    star.lineTo(sz, 0);
+                    star.lineTo(sz * 0.35, sz * 0.35);
+                    star.lineTo(0, sz);
+                    star.lineTo(-sz * 0.35, sz * 0.35);
+                    star.lineTo(-sz, 0);
+                    star.lineTo(-sz * 0.35, -sz * 0.35);
+                    star.closePath();
+                    star.endFill();
+                    // Random position within cell
+                    star.position.set(
+                        margin + Math.random() * (CELL_SIZE - margin * 2),
+                        margin + Math.random() * (CELL_SIZE - margin * 2)
+                    );
+                    star.alpha = 0;
+                    newGraphic.addChild(star);
+
+                    // Each star has a random delay and loops fade in → fade out
+                    const delay = Math.random() * 1200;
+                    const cycleDuration = 800 + Math.random() * 400; // 800~1200ms
+                    let elapsed = -delay;
+                    const update = (dt) => {
+                        elapsed += PIXI.Ticker.shared.deltaMS;
+                        if (elapsed < 0) return;
+                        const phase = (elapsed % cycleDuration) / cycleDuration;
+                        // 0→0.5: fade in, 0.5→1: fade out
+                        star.alpha = phase < 0.5 ? phase * 2 : (1 - phase) * 2;
+                        // Slight rotation for sparkle effect
+                        star.rotation += 0.02 * dt;
+                    };
+                    PIXI.Ticker.shared.add(update);
+                    // Store cleanup reference
+                    if (!newGraphic._starTickers) newGraphic._starTickers = [];
+                    newGraphic._starTickers.push(update);
+                }
+            }
+            _cleanupStarTickers(graphic) {
+                if (graphic && graphic._starTickers) {
+                    graphic._starTickers.forEach(fn => PIXI.Ticker.shared.remove(fn));
+                    graphic._starTickers = null;
+                }
+            }
             createIcon(type) {
                 if (!CONFIG.USE_BASE64_ICONS) {
                     const text = new PIXI.Text(CONFIG.CELL_ICONS_EMOJI[type], { fontSize: 28, fill: '#ffffff' });
@@ -2215,6 +2372,7 @@ void main(void)\r
 
             setType(type) {
                 this.type = type;
+                if (type === -1) this.masterGem = null;
                 return this.render();
             }
 
@@ -2246,7 +2404,12 @@ void main(void)\r
                     const x = p[0];
                     const y = p[1];
                     const type = Math.floor(Math.random() * CELL_COLORS.length);
-                    cells.push({ x, y, type });
+                    const cellData = { x, y, type };
+                    if (CONFIG.MASTER_GEM_PATTERNS && Math.random() < (CONFIG.MASTER_GEM_DROP_RATE || 0)) {
+                        const gemType = Math.floor(Math.random() * CONFIG.MASTER_GEM_PATTERNS.length);
+                        cellData.masterGem = { gemType, level: CONFIG.MASTER_GEM_LEVEL || 0 };
+                    }
+                    cells.push(cellData);
                 }
                 if (cells.length === 0) {
                     cells.push({ x: 0, y: 0, type: Math.floor(Math.random() * CELL_COLORS.length) });
@@ -2286,8 +2449,9 @@ void main(void)\r
                 const { CELL_SIZE } = CONFIG;
                 this.cellObjects = [];
 
-                this.cells.forEach(({ x, y, type }) => {
+                this.cells.forEach(({ x, y, type, masterGem }) => {
                     const cell = new GameCell(type);
+                    if (masterGem) cell.masterGem = masterGem;
                     const graphic = cell.render(x, y);
                     graphic.position.set(offsetX + x * CELL_SIZE, offsetY + y * CELL_SIZE);
                     container.addChild(graphic);
@@ -2978,8 +3142,9 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     this.draggedBlock.dragBounds = { minX, minY, width, height };
                     this.draggedBlock.dragCells = [];
 
-                    this.draggedBlock.block.cells.forEach(({ x, y, type }) => {
+                    this.draggedBlock.block.cells.forEach(({ x, y, type, masterGem }) => {
                         const cell = new GameCell(type);
+                        if (masterGem) cell.masterGem = masterGem;
                         const graphic = cell.render(x - minX, y - minY);
                         graphic.lineStyle(CONFIG.CELL_BORDER_WIDTH, 0xFFFFFF);
                         graphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CONFIG.CELL_BORDER_RADIUS);
@@ -3009,6 +3174,11 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                 const startC = Math.floor(localPos.x  / CELL_SIZE);
                 const startR = Math.floor(localPos.y / CELL_SIZE);
 
+                // Optimization: skip if grid snap position hasn't changed
+                const snapKey = `${startR}_${startC}`;
+                if (this._prevHighlightSnapKey === snapKey) return;
+                this._prevHighlightSnapKey = snapKey;
+
                 // Tạo/clear layer highlight nằm trên board
                 if (!this.boardHighlightLayer) {
                     this.boardHighlightLayer = new PIXI.Container();
@@ -3018,6 +3188,12 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                 } else {
                     this.boardHighlightLayer.removeChildren();
                 }
+
+                // Stop previous gem range animations
+                if (this._gemRangeAnimations && this._gemRangeAnimations.length) {
+                    this._gemRangeAnimations.forEach(fn => this.app.ticker.remove(fn));
+                }
+                this._gemRangeAnimations = [];
 
                 // Revert cell style về mặc định cho các ô đã highlight ở frame trước
                 if (this.prevHighlightedBoardCells && this.prevHighlightedBoardCells.size) {
@@ -3031,6 +3207,7 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                         const spriteData = this.cellSprites.find(s => s.row === r && s.col === c);
                         if (spriteData && spriteData.graphic.parent) {
                             const index = spriteData.graphic.parent.children.indexOf(spriteData.graphic);
+                            cell._cleanupStarTickers(spriteData.graphic);
                             this.boardContainer.removeChild(spriteData.graphic);
                             this.boardContainer.addChildAt(newGraphic, index);
                             spriteData.graphic = newGraphic;
@@ -3050,7 +3227,7 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS || this.board[r][c].type !== -1) {
                         canPlace = false;
                     }
-                    placingCells.push({ r, c, type, dx: dc.dx, dy: dc.dy });
+                    placingCells.push({ r, c, type, dx: dc.dx, dy: dc.dy, masterGem: dc.cell.masterGem });
                 });
 
                 // Overlay: highlight trạng thái đặt
@@ -3076,9 +3253,10 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
 
                 // Nếu đặt được → tính nhóm sẽ bị xóa
                 if (canPlace) {
-                    const tempBoard = this.board.map(row => row.map(cell => ({ type: cell.type })));
-                    placingCells.forEach(({ r, c, type }) => {
+                    const tempBoard = this.board.map(row => row.map(cell => ({ type: cell.type, masterGem: cell.masterGem })));
+                    placingCells.forEach(({ r, c, type, masterGem }) => {
                         tempBoard[r][c].type = type;
+                        if (masterGem) tempBoard[r][c].masterGem = masterGem;
                     });
 
                     const toBeRemoved = new Set();
@@ -3092,7 +3270,46 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     });
 
                     const countRemove = toBeRemoved.size;
-                    const comboType = ComboData.getComboTypeFromCountGetCell(countRemove);
+
+                    // Master gem expansion for preview
+                    const masterGemExpandedCells = new Set();
+                    const masterGemSourceCells = new Set();
+                    if (CONFIG.MASTER_GEM_PATTERNS) {
+                        const gemQueue = [];
+                        toBeRemoved.forEach(key => {
+                            const [r, c] = key.split(',').map(Number);
+                            if (tempBoard[r][c].masterGem) {
+                                gemQueue.push([r, c]);
+                                masterGemSourceCells.add(key);
+                            }
+                        });
+                        while (gemQueue.length > 0) {
+                            const [gr, gc] = gemQueue.shift();
+                            const gem = tempBoard[gr][gc].masterGem;
+                            if (!gem) continue;
+                            const patterns = CONFIG.MASTER_GEM_PATTERNS[gem.gemType];
+                            if (!patterns) continue;
+                            const offsets = gem.level < patterns.length ? patterns[gem.level] : patterns[patterns.length - 1];
+                            if (!offsets) continue;
+                            for (const [dx, dy] of offsets) {
+                                const nr = gr + dy;
+                                const nc = gc + dx;
+                                const key = `${nr},${nc}`;
+                                if (nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS
+                                    && !toBeRemoved.has(key) && tempBoard[nr][nc].type !== -1) {
+                                    toBeRemoved.add(key);
+                                    masterGemExpandedCells.add(key);
+                                    if (tempBoard[nr][nc].masterGem) {
+                                        gemQueue.push([nr, nc]);
+                                        masterGemSourceCells.add(key);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    const totalPreview = toBeRemoved.size;
+                    const comboType = ComboData.getComboTypeFromCountGetCell(totalPreview);
                     const comboColors = comboType ? ComboData.comboColorForLightCells(comboType) : null;
 
                     // CHỈ HIGHLIGHT Ô ĐÃ CÓ ITEM (trên board)
@@ -3110,6 +3327,7 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                         const spriteData = this.cellSprites.find(s => s.row === r && s.col === c);
                         if (spriteData && spriteData.graphic.parent) {
                             const index = spriteData.graphic.parent.children.indexOf(spriteData.graphic);
+                            originalCell._cleanupStarTickers(spriteData.graphic);
                             this.boardContainer.removeChild(spriteData.graphic);
                             this.boardContainer.addChildAt(newGraphic, index);
                             spriteData.graphic = newGraphic;
@@ -3133,28 +3351,133 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                             newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CONFIG.CELL_BORDER_RADIUS);
                             newGraphic.position.copyFrom(dc.graphic.position);
 
+                            dc.cell._cleanupStarTickers(dc.graphic);
                             const parent = dc.graphic.parent;
-                            const index = parent.children.indexOf(dc.graphic);
-                            parent.removeChild(dc.graphic);
-                            parent.addChildAt(newGraphic, index);
+                            if (parent) {
+                                const index = parent.children.indexOf(dc.graphic);
+                                parent.removeChild(dc.graphic);
+                                if (index >= 0) parent.addChildAt(newGraphic, Math.min(index, parent.children.length));
+                                else parent.addChild(newGraphic);
+                            }
                             dc.graphic = newGraphic;
                         });
                     }
 
-                    // Không vẽ overlay trên block kéo để tránh đè lên block
+                    // Master gem range overlay
+                    // Block cell overlays → dragGraphic (move with block)
+                    // Board cell overlays → _gemOverlayStageLayer (fixed on board)
+                    const placingCellKeys = new Set(placingCells.map(pc => `${pc.r},${pc.c}`));
+
+                    // Clean up previous block-level gem overlays
+                    if (this._dragGemOverlays) {
+                        this._dragGemOverlays.forEach(g => { if (g.parent) g.parent.removeChild(g); });
+                    }
+                    this._dragGemOverlays = [];
+
+                    if (masterGemSourceCells.size > 0) {
+                        // Create/clear stage-level gem overlay layer (for board cells only)
+                        if (!this._gemOverlayStageLayer) {
+                            this._gemOverlayStageLayer = new PIXI.Container();
+                            this.app.stage.addChild(this._gemOverlayStageLayer);
+                        } else {
+                            this._gemOverlayStageLayer.removeChildren();
+                        }
+                        this.app.stage.removeChild(this._gemOverlayStageLayer);
+                        this.app.stage.addChild(this._gemOverlayStageLayer);
+
+                        const boardWorldPos = this.boardContainer.toGlobal({ x: 0, y: 0 });
+
+                        masterGemSourceCells.forEach(srcKey => {
+                            const [sr, sc] = srcKey.split(',').map(Number);
+                            const gem = tempBoard[sr][sc].masterGem;
+                            if (!gem) return;
+                            const patterns = CONFIG.MASTER_GEM_PATTERNS[gem.gemType];
+                            if (!patterns) return;
+                            const offsets = gem.level < patterns.length ? patterns[gem.level] : patterns[patterns.length - 1];
+                            if (!offsets) return;
+
+                            // Gold border on the gem source cell itself
+                            const srcOverlay = new PIXI.Graphics();
+                            srcOverlay.lineStyle({ width: 3, color: 0xFFD700, alpha: 0.9 });
+                            srcOverlay.drawRoundedRect(1, 1, CELL_SIZE - 2, CELL_SIZE - 2, CONFIG.CELL_BORDER_RADIUS);
+                            const isBlockCell = placingCellKeys.has(srcKey);
+                            if (isBlockCell && this.draggedBlock.dragGraphic) {
+                                srcOverlay.position.set((sc - startC) * CELL_SIZE, (sr - startR) * CELL_SIZE);
+                                this.draggedBlock.dragGraphic.addChild(srcOverlay);
+                                this._dragGemOverlays.push(srcOverlay);
+                            } else {
+                                srcOverlay.position.set(boardWorldPos.x + sc * CELL_SIZE, boardWorldPos.y + sr * CELL_SIZE);
+                                this._gemOverlayStageLayer.addChild(srcOverlay);
+                            }
+
+                            // Square highlights at each offset position
+                            offsets.forEach(([dx, dy]) => {
+                                const nr = sr + dy;
+                                const nc = sc + dx;
+                                if (nr < 0 || nr >= BOARD_ROWS || nc < 0 || nc >= BOARD_COLS) return;
+                                const cellKey = `${nr},${nc}`;
+                                const onBlock = placingCellKeys.has(cellKey);
+
+                                const overlay = new PIXI.Graphics();
+                                overlay.lineStyle({ width: 2, color: 0xFFD700, alpha: 1 });
+                                const inset = 2;
+                                overlay.drawRoundedRect(inset, inset, CELL_SIZE - inset * 2, CELL_SIZE - inset * 2, CONFIG.CELL_BORDER_RADIUS);
+                                overlay.pivot.set(CELL_SIZE / 2, CELL_SIZE / 2);
+                                overlay.alpha = 0.2;
+                                overlay.scale.set(1.6);
+
+                                if (onBlock && this.draggedBlock.dragGraphic) {
+                                    overlay.position.set((nc - startC) * CELL_SIZE + CELL_SIZE / 2, (nr - startR) * CELL_SIZE + CELL_SIZE / 2);
+                                    this.draggedBlock.dragGraphic.addChild(overlay);
+                                    this._dragGemOverlays.push(overlay);
+                                } else {
+                                    overlay.position.set(boardWorldPos.x + nc * CELL_SIZE + CELL_SIZE / 2, boardWorldPos.y + nr * CELL_SIZE + CELL_SIZE / 2);
+                                    this._gemOverlayStageLayer.addChild(overlay);
+                                }
+
+                                // Animate: scale 1.6->1, alpha 0.2->1
+                                let elapsed = 0;
+                                const duration = 250;
+                                const update = () => {
+                                    elapsed += this.app.ticker.deltaMS;
+                                    const t = Math.min(elapsed / duration, 1);
+                                    overlay.scale.set(1.6 - 0.6 * t);
+                                    overlay.alpha = 0.2 + 0.8 * t;
+                                    if (t >= 1) {
+                                        this.app.ticker.remove(update);
+                                    }
+                                };
+                                this.app.ticker.add(update);
+                                this._gemRangeAnimations.push(update);
+                            });
+                        });
+                    } else if (this._gemOverlayStageLayer) {
+                        this._gemOverlayStageLayer.removeChildren();
+                    }
                 }
                 else {
                     // Không đặt được → revert ô trong block về màu thường
+                    if (this._gemOverlayStageLayer) {
+                        this._gemOverlayStageLayer.removeChildren();
+                    }
+                    if (this._dragGemOverlays) {
+                        this._dragGemOverlays.forEach(g => { if (g.parent) g.parent.removeChild(g); });
+                        this._dragGemOverlays = [];
+                    }
                     if (this.draggedBlock?.dragCells && this.draggedBlock.dragCells.length) {
                         this.draggedBlock.dragCells.forEach(dc => {
                             const newGraphic = dc.cell.render();
                             newGraphic.lineStyle(CONFIG.CELL_BORDER_WIDTH, 0xFFFFFF);
                             newGraphic.drawRoundedRect(0, 0, CELL_SIZE, CELL_SIZE, CONFIG.CELL_BORDER_RADIUS);
                             newGraphic.position.copyFrom(dc.graphic.position);
+                            dc.cell._cleanupStarTickers(dc.graphic);
                             const parent = dc.graphic.parent;
-                            const index = parent.children.indexOf(dc.graphic);
-                            parent.removeChild(dc.graphic);
-                            parent.addChildAt(newGraphic, index);
+                            if (parent) {
+                                const index = parent.children.indexOf(dc.graphic);
+                                parent.removeChild(dc.graphic);
+                                if (index >= 0) parent.addChildAt(newGraphic, Math.min(index, parent.children.length));
+                                else parent.addChild(newGraphic);
+                            }
                             dc.graphic = newGraphic;
                         });
                     }
@@ -3183,6 +3506,21 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
 
             onPointerUp(e) {
                  if (!this.draggedBlock) return;
+
+                // Clean up highlight state
+                this._prevHighlightSnapKey = null;
+                if (this._gemRangeAnimations) {
+                    this._gemRangeAnimations.forEach(fn => this.app.ticker.remove(fn));
+                    this._gemRangeAnimations = [];
+                }
+                if (this._gemOverlayStageLayer) {
+                    this._gemOverlayStageLayer.removeChildren();
+                }
+                if (this._dragGemOverlays) {
+                    this._dragGemOverlays.forEach(g => { if (g.parent) g.parent.removeChild(g); });
+                    this._dragGemOverlays = [];
+                }
+
                 if (this.draggedBlock.dragGraphic) {
                     this.app.stage.removeChild(this.draggedBlock.dragGraphic);
                     this.draggedBlock.dragGraphic = null;
@@ -3221,6 +3559,7 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     const spriteData = this.cellSprites.find(s => s.row === r && s.col === c);
                     if (spriteData && spriteData.graphic.parent) {
                         const index = spriteData.graphic.parent.children.indexOf(spriteData.graphic);
+                        cell._cleanupStarTickers(spriteData.graphic);
                         this.boardContainer.removeChild(spriteData.graphic);
                         this.boardContainer.addChildAt(newGraphic, index);
                         spriteData.graphic = newGraphic;
@@ -3267,9 +3606,10 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
 
                     if (!canPlace) return false;
 
-                    for (let { x: dx, y: dy, type } of block.cells) {
+                    for (let { x: dx, y: dy, type, masterGem } of block.cells) {
                         const r = startR + dy;
                         const c = startC + dx;
+                        this.board[r][c].masterGem = masterGem || null;
                         this.board[r][c].setType(type);
                         this.updateCellGraphic(r, c);
                     }
@@ -3505,12 +3845,49 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                 groups.forEach(group => {
                     group.forEach(([r, c]) => allCells.push([r, c]));
                 });
+
+                const normalCellCount = allCells.length;
+
+                // Master gem expansion: when a master gem cell is collected, also collect cells at its offset positions
+                if (CONFIG.MASTER_GEM_PATTERNS) {
+                    const { BOARD_ROWS, BOARD_COLS } = CONFIG;
+                    const collectedSet = new Set(allCells.map(([r, c]) => `${r},${c}`));
+                    const gemQueue = [];
+                    allCells.forEach(([r, c]) => {
+                        if (this.board[r][c].masterGem) gemQueue.push([r, c]);
+                    });
+                    while (gemQueue.length > 0) {
+                        const [gr, gc] = gemQueue.shift();
+                        const gem = this.board[gr][gc].masterGem;
+                        if (!gem) continue;
+                        const patterns = CONFIG.MASTER_GEM_PATTERNS[gem.gemType];
+                        if (!patterns) continue;
+                        const offsets = gem.level < patterns.length ? patterns[gem.level] : patterns[patterns.length - 1];
+                        if (!offsets) continue;
+                        for (const [dx, dy] of offsets) {
+                            const nr = gr + dy;
+                            const nc = gc + dx;
+                            const key = `${nr},${nc}`;
+                            if (nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS
+                                && !collectedSet.has(key) && this.board[nr][nc].type !== -1) {
+                                collectedSet.add(key);
+                                allCells.push([nr, nc]);
+                                if (this.board[nr][nc].masterGem) gemQueue.push([nr, nc]);
+                            }
+                        }
+                    }
+                }
+
                 const total = allCells.length;
                 const comboType = ComboData.getComboTypeFromCountGetCell(total);
                 const comboColors = comboType ? ComboData.comboColorForLightCells(comboType) : null;
                 const interval = 50;
+                const hasGemExpansion = allCells.length > normalCellCount;
+                const gemExpandDelay = hasGemExpansion ? normalCellCount * interval + 250 : 0;
 
-                allCells.forEach(([r, c], i) => {
+                // Animate normal cells
+                for (let i = 0; i < normalCellCount; i++) {
+                    const [r, c] = allCells[i];
                     setTimeout(() => {
                         const originalCell = this.board[r][c];
                         if (!originalCell || originalCell.type === -1) return;
@@ -3548,8 +3925,71 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                             }
                         };
                         this.app.ticker.add(update);
+
+                        // Spawn square range highlights when a master gem cell is collected
+                        if (originalCell.masterGem) {
+                            this.spawnMasterGemRangeEffect(r, c);
+                        }
                     }, i * interval);
-                });
+                }
+
+                // Animate gem expansion cells with delay + special gold border effect
+                if (hasGemExpansion) {
+                    for (let i = normalCellCount; i < allCells.length; i++) {
+                        const [r, c] = allCells[i];
+                        const expandIndex = i - normalCellCount;
+                        setTimeout(() => {
+                            const originalCell = this.board[r][c];
+                            if (!originalCell || originalCell.type === -1) return;
+                            const newGraphic = originalCell.renderHighlightGreen(comboColors, 0xFFFFFF);
+
+                            // Gold border to show master gem power
+                            const goldBorder = new PIXI.Graphics();
+                            goldBorder.lineStyle({ width: 3, color: 0xFFD700, alpha: 0.9 });
+                            goldBorder.drawRoundedRect(-1, -1, CONFIG.CELL_SIZE + 2, CONFIG.CELL_SIZE + 2, CONFIG.CELL_BORDER_RADIUS);
+                            newGraphic.addChild(goldBorder);
+
+                            newGraphic.pivot.set(CONFIG.CELL_SIZE / 2, CONFIG.CELL_SIZE / 2);
+                            newGraphic.position.set(c * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2, r * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2);
+                            newGraphic.zIndex = 20;
+                            const spriteData = this.cellSprites.find(s => s.row === r && s.col === c);
+                            if (spriteData && spriteData.graphic.parent) {
+                                const index = spriteData.graphic.parent.children.indexOf(spriteData.graphic);
+                                this.boardContainer.removeChild(spriteData.graphic);
+                                this.boardContainer.addChildAt(newGraphic, index);
+                                spriteData.graphic = newGraphic;
+                                originalCell.graphic = newGraphic;
+                            }
+                            let elapsed = 0;
+                            const growMs = 100;
+                            const holdMs = 60;
+                            const shrinkMs = 100;
+                            newGraphic.scale.set(0.5);
+                            const update = () => {
+                                elapsed += this.app.ticker.deltaMS;
+                                if (elapsed <= growMs) {
+                                    const t = elapsed / growMs;
+                                    newGraphic.scale.set(0.5 + 0.7 * t);
+                                } else if (elapsed <= growMs + holdMs) {
+                                    newGraphic.scale.set(1.2);
+                                } else {
+                                    const t2 = Math.min((elapsed - growMs - holdMs) / shrinkMs, 1);
+                                    newGraphic.scale.set(1.2 - 0.2 * t2);
+                                    if (t2 >= 1) {
+                                        this.app.ticker.remove(update);
+                                        newGraphic.scale.set(1);
+                                    }
+                                }
+                            };
+                            this.app.ticker.add(update);
+                        }, gemExpandDelay + expandIndex * interval);
+                    }
+                }
+
+                // Cleanup timing
+                const totalDuration = hasGemExpansion
+                    ? gemExpandDelay + (allCells.length - normalCellCount) * interval + 50
+                    : normalCellCount * interval + 50;
 
                 setTimeout(() => {
                     const collected = [];
@@ -3570,7 +4010,62 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     this.isAnimatingEat = false;
                     this.checkGameOver();
                     setTimeout(() => this.checkMatches(), 200);
-                }, allCells.length * interval + 50);
+                }, totalDuration);
+            }
+
+            spawnMasterGemRangeEffect(r, c) {
+                const { CELL_SIZE, BOARD_ROWS, BOARD_COLS, CELL_BORDER_RADIUS } = CONFIG;
+                const cell = this.board[r][c];
+                if (!cell || !cell.masterGem) return;
+                const gem = cell.masterGem;
+                const patterns = CONFIG.MASTER_GEM_PATTERNS[gem.gemType];
+                if (!patterns) return;
+                const offsets = gem.level < patterns.length ? patterns[gem.level] : patterns[patterns.length - 1];
+                if (!offsets) return;
+
+                offsets.forEach(([dx, dy], idx) => {
+                    const nr = r + dy;
+                    const nc = c + dx;
+                    if (nr < 0 || nr >= BOARD_ROWS || nc < 0 || nc >= BOARD_COLS) return;
+
+                    const sq = new PIXI.Graphics();
+                    sq.lineStyle({ width: 3, color: 0xFFD700, alpha: 1 });
+                    const inset = 2;
+                    sq.drawRoundedRect(inset, inset, CELL_SIZE - inset * 2, CELL_SIZE - inset * 2, CELL_BORDER_RADIUS);
+                    sq.pivot.set(CELL_SIZE / 2, CELL_SIZE / 2);
+                    sq.position.set(nc * CELL_SIZE + CELL_SIZE / 2, nr * CELL_SIZE + CELL_SIZE / 2);
+                    sq.zIndex = 100;
+                    sq.alpha = 0.2;
+                    sq.scale.set(1.6);
+                    this.boardContainer.addChild(sq);
+
+                    const delay = idx * 30;
+                    setTimeout(() => {
+                        let elapsed = 0;
+                        const animateIn = 200;
+                        const hold = 250;
+                        const fadeOut = 300;
+                        const update = () => {
+                            elapsed += this.app.ticker.deltaMS;
+                            if (elapsed <= animateIn) {
+                                const t = elapsed / animateIn;
+                                sq.scale.set(1.6 - 0.6 * t);
+                                sq.alpha = 0.2 + 0.8 * t;
+                            } else if (elapsed <= animateIn + hold) {
+                                sq.scale.set(1);
+                                sq.alpha = 1;
+                            } else {
+                                const t2 = Math.min((elapsed - animateIn - hold) / fadeOut, 1);
+                                sq.alpha = 1 - t2;
+                                if (t2 >= 1) {
+                                    this.app.ticker.remove(update);
+                                    if (sq.parent) sq.parent.removeChild(sq);
+                                }
+                            }
+                        };
+                        this.app.ticker.add(update);
+                    }, delay);
+                });
             }
 
             getConnectedGroup(startR, startC) {
