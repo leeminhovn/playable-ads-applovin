@@ -3792,7 +3792,13 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     this.draggedBlock.dragHighlightLayer = null;
                 }
                 const { BOARD_COLS, BOARD_ROWS, CELL_SIZE } = CONFIG;
-                const pos = e.data.global;
+                const rawPos = e.data.global;
+
+                // Áp dụng cùng hệ số khuếch đại như khi drag
+                const amplify = 1.5;
+                const ampX = this.draggedBlock.startPos.x + (rawPos.x - this.draggedBlock.startPos.x) * amplify;
+                const ampY = this.draggedBlock.startPos.y + (rawPos.y - this.draggedBlock.startPos.y) * amplify;
+                const pos = { x: ampX, y: ampY };
 
                 const { width = 0, height = 0 } = this.draggedBlock.dragBounds || {};
                 const adjustedPos = new PIXI.Point(pos.x - width / 2, (pos.y - 10) - height);
