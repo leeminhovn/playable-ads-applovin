@@ -3416,8 +3416,11 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                     this.draggedBlock.dragGraphic.pivot.set(width / 2, height);
                 }
 
-                // Đặt vị trí: bottom-center tại vị trí ngón tay, lệch lên 10px
-                this.draggedBlock.dragGraphic.position.set(pos.x, pos.y - 10);
+                // Đặt vị trí: bottom-center tại vị trí ngón tay, lệch lên 10px (khuếch đại 1.5x)
+                const amplify = 1.5;
+                const ampX = this.draggedBlock.startPos.x + (pos.x - this.draggedBlock.startPos.x) * amplify;
+                const ampY = this.draggedBlock.startPos.y + (pos.y - this.draggedBlock.startPos.y) * amplify;
+                this.draggedBlock.dragGraphic.position.set(ampX, ampY - 10);
                 this.updateBoardHighlight(pos);
             }
 
