@@ -4437,7 +4437,7 @@ console.log('Canvas in DOM?', container.contains(this.app.view));
                 const anyPlaceable = this.currentBlocks.some(b => !!b && this.canPlaceBlockAnywhere(b));
                 if (!anyPlaceable) {
                     if (this._gameOverPending) return true;
-                    this.startGameOverGlow(5000);
+                    this.startGameOverGlow(1000);
                     return true;
                 } else {
                     if (this._gameOverPending) this.stopGameOverGlow();
